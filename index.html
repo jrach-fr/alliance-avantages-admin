@@ -169,7 +169,7 @@
   </header>
 
   <nav>
-    <button class="active" onclick="showSection('dashboard')">📊 Tableau de bord</button>
+    <button class="active" onclick="('dashboard')">📊 Tableau de bord</button>
     <button onclick="showSection('offers')">🏷️ Offres</button>
     <button onclick="showSection('add-offer')">➕ Ajouter une offre</button>
     <button onclick="showSection('categories')">📂 Catégories</button>
@@ -670,6 +670,9 @@
     document.getElementById('section-' + name).classList.add('active');
     event.target.classList.add('active');
 
+    // Masque le message alert quand on change de section
+    document.getElementById('alert').style.display = 'none';
+
     if (name === 'offers') loadOffers();
     if (name === 'categories') loadCategories();
     if (name === 'add-offer') loadCategoriesForForm();
@@ -851,6 +854,9 @@
  * MODIFIE : insère une nouvelle offre dans Supabase, recharge les données, réinitialise le formulaire
  */
   async function addOffer() {
+
+    document.getElementById('alert').style.display = 'none';
+    
     const title = document.getElementById('new-title').value.trim();
     const description = document.getElementById('new-description').value.trim();
     const discount = document.getElementById('new-discount').value.trim();
