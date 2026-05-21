@@ -262,7 +262,7 @@
             <textarea id="new-description" placeholder="Description détaillée de l'offre..."></textarea>
           </div>
           <div class="form-group">
-            <label>Réduction *</label>
+            <label>Réduction</label>
             <input type="text" id="new-discount" placeholder="Ex: -20%, 2 pour 1, Gratuit...">
           </div>
           <div class="form-group">
@@ -483,7 +483,7 @@
         <input type="text" id="edit-partner-name">
       </div>
       <div class="form-group">
-        <label>URL Partenaire</label>
+        <label>URL de l'offre *</label>
         <input type="url" id="edit-partner-url">
       </div>
       <div class="form-group">
@@ -948,6 +948,19 @@
   }
 }
 
+  /**
+ * FONCTION : toggleCityInput
+ * DESCRIPTION : Affiche ou masque le champ ville personnalisé selon la sélection
+ * PARAMÈTRES :
+ *   - value (string) : valeur sélectionnée dans le select ville
+ * RETOURNE : rien
+ * MODIFIE : affichage de #new-city
+ */
+function toggleCityInput(value) {
+  const input = document.getElementById('new-city');
+  input.style.display = value === 'custom' ? 'block' : 'none';
+}
+  
   /**
  * FONCTION : previewOffer
  * DESCRIPTION : Génère un aperçu visuel de la carte offre telle qu'elle apparaîtra dans l'app
