@@ -24,6 +24,16 @@
   - Passer une offre en "Flash" ou "Nouveau"
   - Gérer les catégories (modification/suppression/création)
   - Gérer les sous-catégories par catégorie
+  - Upload d'images direct vers Supabase Storage
+  - Poubelle avec restauration (365 jours, suppression définitive manuelle ou automatique)
+  - Message de succès/erreur persistant avec titre de l'offre concernée
+
+  À VENIR :
+  - Section statistiques avancées (graphiques)
+  - Drag & drop pour réordonner les catégories
+  - Section paramètres (mot de passe, délai poubelle paramétrable)
+  - Sauvegarde complète (app + base SQL)
+  - Notifications push depuis l'admin
   
   VARIABLES À MODIFIER SI NÉCESSAIRE :
   - SUPABASE_URL    : URL du projet Supabase
@@ -31,7 +41,7 @@
   - ADMIN_PASSWORD  : Mot de passe de l'interface admin
   
   ATTENTIONS PARTICULIÈRES :
-  - Ne jamais partager ce fichier avec le mot de passe en clair
+  - Ne jamais partager ce fichier avec le mot de passe en clair !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   - Changer ADMIN_PASSWORD régulièrement
   - La clé SUPABASE_KEY est publique mais protégée par RLS
   
@@ -824,12 +834,14 @@
 
   /**
  * FONCTION : deleteOffer
- * DESCRIPTION : Supprime une offre après confirmation de l'utilisateur
+ * DESCRIPTION : Envoie une offre à la poubelle (suppression douce) en marquant deleted_at
+ *               L'offre disparaît de l'app mais reste récupérable pendant 365 jours
  * PARAMÈTRES :
- *   - id (string) : UUID de l'offre à supprimer
+ *   - id (string) : UUID de l'offre à mettre à la poubelle
  * RETOURNE : rien
- * MODIFIE : supprime l'offre dans Supabase, recharge la liste
+ * MODIFIE : met à jour deleted_at dans Supabase, recharge la liste des offres
  */
+  
  async function deleteOffer(id) {
   const offer = allOffers.find(o => o.id === id);
   const title = offer ? offer.title : 'cette offre';
