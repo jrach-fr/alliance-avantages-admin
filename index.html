@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  FICHIER    : index.html
+  LOCATION   : Racine du repository alliance-avantages-admin
+  AUTEUR     : JRach - BST N 130 - Nice
+  PROJET     : Alliance Avantages - 2026
+  CONTACT    : rjermouni@gmail.com
+  COPYRIGHT  : Tous droits réservés - Reproduction et 
+               modification interdites sans autorisation
+  ============================================================
+  
+  DESCRIPTION :
+  Interface d'administration web pour l'application mobile
+  Alliance Avantages. Permet de gérer les offres, catégories
+  et sous-catégories depuis un navigateur, sans toucher au code.
+  Hébergée sur GitHub Pages, accessible depuis n'importe où.
+
+  FONCTIONNALITÉS :
+  - Tableau de bord avec statistiques
+  - Ajouter / modifier / supprimer des offres
+  - Activer / désactiver une offre en un clic
+  - Passer une offre en "Flash" ou "Nouveau"
+  - Gérer les catégories
+  
+  VARIABLES À MODIFIER SI NÉCESSAIRE :
+  - SUPABASE_URL    : URL du projet Supabase
+  - SUPABASE_KEY    : Clé publique Supabase
+  - ADMIN_PASSWORD  : Mot de passe de l'interface admin
+  
+  ATTENTIONS PARTICULIÈRES :
+  - Ne jamais partager ce fichier avec le mot de passe en clair
+  - Changer ADMIN_PASSWORD régulièrement
+  - La clé SUPABASE_KEY est publique mais protégée par RLS
+  
+  ÉVÈNEMENTS SPÉCIAUX (bloc à modifier pour personnaliser) :
+  - Pour afficher un message spécial (Noël, tombola, jeux 
+    concours...), modifier la section DASHBOARD en ajoutant
+    une bannière entre les stats et le tableau des offres.
+  - Exemple : <div class="banner-event">🎄 Joyeux Noël !</div>
+  ============================================================
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alliance Avantages — Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4F6FB; color: #111827; }
+
+    /* LOGIN */
+    #login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #003189; }
+    .login-box { background: white; border-radius: 16px; padding: 40px; width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); text-align: center; }
+    .login-box h1 { color: #003189; font-size: 22px; margin-bottom: 8px; }
+    .login-box p { color: #6B7280; font-size: 14px; margin-bottom: 28px; }
+    .login-box input { width: 100%; padding: 12px 16px; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 15px; margin-bottom: 16px; outline: none; }
+    .login-box input:focus { border-color: #003189; }
+    .login-box button { width: 100%; padding: 14px; background: #003189; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .login-box button:hover { background: #001F5E; }
+    .login-error { color: #EF4444; font-size: 13px; margin-top: 8px; display: none; }
+
+    /* HEADER */
+    #app { display: none; }
+    header { background: #003189; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,49,137,0.3); }
+    header img { height: 40px; }
+    header .header-right { display: flex; align-items: center; gap: 16px; }
+    header span { color: rgba(255,255,255,0.8); font-size: 13px; }
+    header button { background: #FF6B00; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+    /* NAV */
+    nav { background: #001F5E; display: flex; gap: 0; overflow-x: auto; }
+    nav button { color: rgba(255,255,255,0.7); background: none; border: none; padding: 14px 20px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    nav button:hover { color: white; background: rgba(255,255,255,0.05); }
+    nav button.active { color: white; border-bottom-color: #FF6B00; }
+
+    /* MAIN */
+    main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 12px; padding: 20px; border-bottom: 3px solid #003189; box-shadow: 0 2px 8px rgba(0,49,137,0.08); }
+    .stat-card .number { font-size: 32px; font-weight: 700; color: #003189; }
+    .stat-card .label { font-size: 13px; color: #6B7280; margin-top: 4px; }
+    .stat-card.orange { border-bottom-color: #FF6B00; }
+    .stat-card.orange .number { color: #FF6B00; }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-header h2 { font-size: 20px; font-weight: 700; color: #001F5E; }
+    .btn-primary { background: #003189; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn-primary:hover { background: #001F5E; }
+    .btn-orange { background: #FF6B00; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-danger { background: #EF4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .btn-edit { background: #003189; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+    /* TABLE */
+    .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,49,137,0.08); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #003189; color: white; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; }
+    td { padding: 12px 16px; border-bottom: 1px solid #F4F6FB; font-size: 14px; }
+    tr:hover td { background: #F4F6FB; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #D1FAE5; color: #065F46; }
+    .badge-red { background: #FEE2E2; color: #991B1B; }
+    .badge-orange { background: #FFF3E0; color: #FF6B00; }
+
+    /* FORM */
+    .form-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,49,137,0.08); margin-bottom: 20px; border-bottom: 3px solid #003189; }
+    .form-card h3 { font-size: 16px; font-weight: 700; color: #001F5E; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 14px; outline: none; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #003189; }
+    .form-group textarea { height: 100px; resize: vertical; }
+    .form-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .toggle-group { display: flex; gap: 16px; }
+    .toggle-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    .toggle-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #003189; }
+
+    /* ALERT */
+    .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+    .alert-success { background: #D1FAE5; color: #065F46; border-left: 4px solid #10B981; }
+    .alert-error { background: #FEE2E2; color: #991B1B; border-left: 4px solid #EF4444; }
+
+    /* LOADING */
+    .loading { text-align: center; padding: 40px; color: #6B7280; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; color: #001F5E; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #6B7280; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🔐 Alliance Avantages</h1>
+    <p>Interface d'administration</p>
+    <input type="password" id="login-password" placeholder="Mot de passe" onkeypress="if(event.key==='Enter') login()">
+    <button onclick="login()">Se connecter</button>
+    <p class="login-error" id="login-error">Mot de passe incorrect</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <img src="https://v-images.cdnsw.com/Root/ebtri/Logo_AA.jpg" alt="Alliance Avantages" onerror="this.style.display='none'">
+    <div class="header-right">
+      <span id="header-info">Chargement...</span>
+      <button onclick="logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" onclick="showSection('dashboard')">📊 Tableau de bord</button>
+    <button onclick="showSection('offers')">🏷️ Offres</button>
+    <button onclick="showSection('add-offer')">➕ Ajouter une offre</button>
+    <button onclick="showSection('categories')">📂 Catégories</button>
+  </nav>
+
+  <main>
+    <div id="alert" class="alert"></div>
+
+    <!-- DASHBOARD -->
+    <div id="section-dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="number" id="stat-total">-</div>
+          <div class="label">Offres totales</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="number" id="stat-flash">-</div>
+          <div class="label">Offres flash</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="stat-active">-</div>
+          <div class="label">Offres actives</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="number" id="stat-categories">-</div>
+          <div class="label">Catégories</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Offre</th>
+              <th>Partenaire</th>
+              <th>Catégorie</th>
+              <th>Réduction</th>
+              <th>Statut</th>
+              <th>Flash</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-table">
+            <tr><td colspan="6" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- OFFRES -->
+    <div id="section-offers" class="section">
+      <div class="section-header">
+        <h2>Gestion des offres</h2>
+        <button class="btn-primary" onclick="showSection('add-offer')">➕ Nouvelle offre</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Partenaire</th>
+              <th>Ville</th>
+              <th>Réduction</th>
+              <th>Flash</th>
+              <th>Nouveau</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="offers-table">
+            <tr><td colspan="8" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AJOUTER OFFRE -->
+    <div id="section-add-offer" class="section">
+      <div class="section-header">
+        <h2>Ajouter une offre</h2>
+      </div>
+      <div class="form-card">
+        <h3>Informations de l'offre</h3>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Titre *</label>
+            <input type="text" id="new-title" placeholder="Ex: -20% sur toute la collection">
+          </div>
+          <div class="form-group full">
+            <label>Description *</label>
+            <textarea id="new-description" placeholder="Description détaillée de l'offre..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Réduction *</label>
+            <input type="text" id="new-discount" placeholder="Ex: -20%, 2 pour 1, Gratuit...">
+          </div>
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" id="new-city" placeholder="Ex: Nice, Antibes, En ligne...">
+          </div>
+          <div class="form-group">
+            <label>Partenaire *</label>
+            <input type="text" id="new-partner-name" placeholder="Nom du partenaire">
+          </div>
+          <div class="form-group">
+            <label>URL Partenaire *</label>
+            <input type="url" id="new-partner-url" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Catégorie *</label>
+            <select id="new-category">
+              <option value="">Choisir une catégorie...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sous-catégorie</label>
+            <select id="new-subcategory">
+              <option value="">Choisir une sous-catégorie...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Code promo</label>
+            <input type="text" id="new-promo-code" placeholder="Ex: PROMO20">
+          </div>
+          <div class="form-group">
+            <label>Image URL</label>
+            <input type="url" id="new-image-url" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Date d'expiration</label>
+            <input type="datetime-local" id="new-expires-at">
+          </div>
+          <div class="form-group">
+            <label>Options</label>
+            <div class="toggle-group">
+              <label class="toggle-item">
+                <input type="checkbox" id="new-flash"> Vente Flash
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" id="new-is-new" checked> Nouveau
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" id="new-active" checked> Actif
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="addOffer()">✅ Ajouter l'offre</button>
+          <button class="btn-orange" onclick="resetForm()">🔄 Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div id="section-categories" class="section">
+      <div class="section-header">
+        <h2>Catégories</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Icône</th>
+              <th>Nom</th>
+              <th>Valeur</th>
+              <th>Position</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="categories-table">
+            <tr><td colspan="5" class="loading">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL EDIT -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Modifier l'offre</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="edit-id">
+      <div class="form-group full">
+        <label>Titre</label>
+        <input type="text" id="edit-title">
+      </div>
+      <div class="form-group full">
+        <label>Description</label>
+        <textarea id="edit-description"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Réduction</label>
+        <input type="text" id="edit-discount">
+      </div>
+      <div class="form-group">
+        <label>Ville</label>
+        <input type="text" id="edit-city">
+      </div>
+      <div class="form-group">
+        <label>Partenaire</label>
+        <input type="text" id="edit-partner-name">
+      </div>
+      <div class="form-group">
+        <label>URL Partenaire</label>
+        <input type="url" id="edit-partner-url">
+      </div>
+      <div class="form-group">
+        <label>Code promo</label>
+        <input type="text" id="edit-promo-code">
+      </div>
+      <div class="form-group">
+        <label>Image URL</label>
+        <input type="url" id="edit-image-url">
+      </div>
+      <div class="form-group">
+        <label>Date d'expiration</label>
+        <input type="datetime-local" id="edit-expires-at">
+      </div>
+      <div class="form-group">
+        <label>Options</label>
+        <div class="toggle-group">
+          <label class="toggle-item"><input type="checkbox" id="edit-flash"> Flash</label>
+          <label class="toggle-item"><input type="checkbox" id="edit-is-new"> Nouveau</label>
+          <label class="toggle-item"><input type="checkbox" id="edit-active"> Actif</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn-primary" onclick="saveEdit()">💾 Sauvegarder</button>
+      <button class="btn-danger" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG — Modifiez ces valeurs si nécessaire
+  // ============================================================
+  const SUPABASE_URL = 'https://nbgnijldoxpxzulovqlz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_5Nnb4GigXY2F6xkMJrJcqA_i_qle1Nt';
+  const ADMIN_PASSWORD = 'AllianceAdmin2026!';
+
+  // ============================================================
+  // AUTH
+  // ============================================================
+  function login() {
+    const pwd = document.getElementById('login-password').value;
+    if (pwd === ADMIN_PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadAll();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+
+  function logout() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-password').value = '';
+  }
+
+  // ============================================================
+  // API SUPABASE
+  // ============================================================
+  async function supabaseQuery(table, options = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}?`;
+    if (options.select) url += `select=${options.select}&`;
+    if (options.filter) url += `${options.filter}&`;
+    if (options.order) url += `order=${options.order}&`;
+
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    return res.json();
+  }
+
+  async function supabaseUpdate(table, id, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  }
+
+  async function supabaseInsert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+    return res.ok;
+  }
+
+  async function supabaseDelete(table, id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      }
+    });
+    return res.ok;
+  }
+
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    event.target.classList.add('active');
+
+    if (name === 'offers') loadOffers();
+    if (name === 'categories') loadCategories();
+    if (name === 'add-offer') loadCategoriesForForm();
+  }
+
+  // ============================================================
+  // LOAD ALL
+  // ============================================================
+  let allOffers = [];
+  let allCategories = [];
+  let allSubcategories = [];
+
+  async function loadAll() {
+    allOffers = await supabaseQuery('offers', { select: '*', order: 'created_at.desc' });
+    allCategories = await supabaseQuery('categories', { select: '*', order: 'position' });
+    allSubcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
+    loadDashboard();
+  }
+
+  // ============================================================
+  // DASHBOARD
+  // ============================================================
+  function loadDashboard() {
+    document.getElementById('stat-total').textContent = allOffers.length;
+    document.getElementById('stat-flash').textContent = allOffers.filter(o => o.flash).length;
+    document.getElementById('stat-active').textContent = allOffers.filter(o => o.active).length;
+    document.getElementById('stat-categories').textContent = allCategories.length;
+    document.getElementById('header-info').textContent = `${allOffers.length} offres · ${allCategories.length} catégories`;
+
+    const tbody = document.getElementById('dashboard-table');
+    tbody.innerHTML = allOffers.slice(0, 10).map(o => {
+      const cat = allCategories.find(c => c.id === o.category_id);
+      return `<tr>
+        <td><strong>${o.title}</strong></td>
+        <td>${o.partner_name}</td>
+        <td>${cat ? cat.icon + ' ' + cat.label : '-'}</td>
+        <td><span class="badge badge-orange">${o.discount}</span></td>
+        <td><span class="badge ${o.active ? 'badge-green' : 'badge-red'}">${o.active ? 'Actif' : 'Inactif'}</span></td>
+        <td>${o.flash ? '⚡ Flash' : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ============================================================
+  // OFFRES
+  // ============================================================
+  async function loadOffers() {
+    allOffers = await supabaseQuery('offers', { select: '*', order: 'created_at.desc' });
+    const tbody = document.getElementById('offers-table');
+    tbody.innerHTML = allOffers.map(o => {
+      const cat = allCategories.find(c => c.id === o.category_id);
+      return `<tr>
+        <td><strong>${o.title}</strong></td>
+        <td>${o.partner_name}</td>
+        <td>${o.city || '-'}</td>
+        <td><span class="badge badge-orange">${o.discount}</span></td>
+        <td>
+          <label style="cursor:pointer">
+            <input type="checkbox" ${o.flash ? 'checked' : ''} onchange="toggleField('${o.id}', 'flash', this.checked)">
+            ⚡
+          </label>
+        </td>
+        <td>
+          <label style="cursor:pointer">
+            <input type="checkbox" ${o.is_new ? 'checked' : ''} onchange="toggleField('${o.id}', 'is_new', this.checked)">
+            ✨
+          </label>
+        </td>
+        <td>
+          <label style="cursor:pointer">
+            <input type="checkbox" ${o.active ? 'checked' : ''} onchange="toggleField('${o.id}', 'active', this.checked)">
+            ${o.active ? '<span class="badge badge-green">Actif</span>' : '<span class="badge badge-red">Inactif</span>'}
+          </label>
+        </td>
+        <td style="display:flex;gap:6px">
+          <button class="btn-edit" onclick="openEdit('${o.id}')">✏️ Modifier</button>
+          <button class="btn-danger" onclick="deleteOffer('${o.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function toggleField(id, field, value) {
+    const ok = await supabaseUpdate('offers', id, { [field]: value });
+    if (ok) showAlert('Offre mise à jour !', 'success');
+    else showAlert('Erreur lors de la mise à jour', 'error');
+  }
+
+  async function deleteOffer(id) {
+    if (!confirm('Supprimer cette offre ?')) return;
+    const ok = await supabaseDelete('offers', id);
+    if (ok) { showAlert('Offre supprimée !', 'success'); loadOffers(); }
+    else showAlert('Erreur lors de la suppression', 'error');
+  }
+
+  // ============================================================
+  // AJOUTER OFFRE
+  // ============================================================
+  async function loadCategoriesForForm() {
+    const select = document.getElementById('new-category');
+    select.innerHTML = '<option value="">Choisir une catégorie...</option>';
+    allCategories.forEach(cat => {
+      select.innerHTML += `<option value="${cat.id}">${cat.icon} ${cat.label}</option>`;
+    });
+    select.onchange = () => loadSubcategoriesForForm(select.value, 'new-subcategory');
+  }
+
+  function loadSubcategoriesForForm(categoryId, selectId) {
+    const select = document.getElementById(selectId);
+    const subs = allSubcategories.filter(s => s.category_id === categoryId);
+    select.innerHTML = '<option value="">Choisir une sous-catégorie...</option>';
+    subs.forEach(sub => {
+      select.innerHTML += `<option value="${sub.id}">${sub.label}</option>`;
+    });
+  }
+
+  async function addOffer() {
+    const title = document.getElementById('new-title').value.trim();
+    const description = document.getElementById('new-description').value.trim();
+    const discount = document.getElementById('new-discount').value.trim();
+    const city = document.getElementById('new-city').value.trim();
+    const partnerName = document.getElementById('new-partner-name').value.trim();
+    const partnerUrl = document.getElementById('new-partner-url').value.trim();
+    const categoryId = document.getElementById('new-category').value;
+    const subcategoryId = document.getElementById('new-subcategory').value;
+    const promoCode = document.getElementById('new-promo-code').value.trim();
+    const imageUrl = document.getElementById('new-image-url').value.trim();
+    const expiresAt = document.getElementById('new-expires-at').value;
+    const flash = document.getElementById('new-flash').checked;
+    const isNew = document.getElementById('new-is-new').checked;
+    const active = document.getElementById('new-active').checked;
+
+    if (!title || !description || !discount || !partnerName || !partnerUrl || !categoryId) {
+      showAlert('Merci de remplir tous les champs obligatoires (*)', 'error');
+      return;
+    }
+
+    const data = {
+      title, description, discount, city: city || 'En ligne',
+      partner_name: partnerName, partner_url: partnerUrl,
+      category_id: categoryId,
+      subcategory_id: subcategoryId || null,
+      promo_code: promoCode || null,
+      image_url: imageUrl || null,
+      expires_at: expiresAt || null,
+      flash, is_new: isNew, active,
+      position: 0
+    };
+
+    const ok = await supabaseInsert('offers', data);
+    if (ok) {
+      showAlert('Offre ajoutée avec succès !', 'success');
+      resetForm();
+      loadAll();
+    } else {
+      showAlert('Erreur lors de l\'ajout de l\'offre', 'error');
+    }
+  }
+
+  function resetForm() {
+    ['new-title','new-description','new-discount','new-city','new-partner-name',
+     'new-partner-url','new-promo-code','new-image-url','new-expires-at'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('new-flash').checked = false;
+    document.getElementById('new-is-new').checked = true;
+    document.getElementById('new-active').checked = true;
+    document.getElementById('new-category').value = '';
+    document.getElementById('new-subcategory').innerHTML = '<option value="">Choisir une sous-catégorie...</option>';
+  }
+
+  // ============================================================
+  // MODIFIER OFFRE
+  // ============================================================
+  function openEdit(id) {
+    const o = allOffers.find(x => x.id === id);
+    if (!o) return;
+    document.getElementById('edit-id').value = o.id;
+    document.getElementById('edit-title').value = o.title || '';
+    document.getElementById('edit-description').value = o.description || '';
+    document.getElementById('edit-discount').value = o.discount || '';
+    document.getElementById('edit-city').value = o.city || '';
+    document.getElementById('edit-partner-name').value = o.partner_name || '';
+    document.getElementById('edit-partner-url').value = o.partner_url || '';
+    document.getElementById('edit-promo-code').value = o.promo_code || '';
+    document.getElementById('edit-image-url').value = o.image_url || '';
+    document.getElementById('edit-expires-at').value = o.expires_at ? o.expires_at.slice(0,16) : '';
+    document.getElementById('edit-flash').checked = o.flash || false;
+    document.getElementById('edit-is-new').checked = o.is_new || false;
+    document.getElementById('edit-active').checked = o.active || false;
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const data = {
+      title: document.getElementById('edit-title').value,
+      description: document.getElementById('edit-description').value,
+      discount: document.getElementById('edit-discount').value,
+      city: document.getElementById('edit-city').value,
+      partner_name: document.getElementById('edit-partner-name').value,
+      partner_url: document.getElementById('edit-partner-url').value,
+      promo_code: document.getElementById('edit-promo-code').value || null,
+      image_url: document.getElementById('edit-image-url').value || null,
+      expires_at: document.getElementById('edit-expires-at').value || null,
+      flash: document.getElementById('edit-flash').checked,
+      is_new: document.getElementById('edit-is-new').checked,
+      active: document.getElementById('edit-active').checked,
+    };
+    const ok = await supabaseUpdate('offers', id, data);
+    if (ok) {
+      showAlert('Offre modifiée avec succès !', 'success');
+      closeModal();
+      loadOffers();
+    } else {
+      showAlert('Erreur lors de la modification', 'error');
+    }
+  }
+
+  // ============================================================
+  // CATEGORIES
+  // ============================================================
+  async function loadCategories() {
+    const tbody = document.getElementById('categories-table');
+    tbody.innerHTML = allCategories.map(cat => `<tr>
+      <td style="font-size:24px">${cat.icon}</td>
+      <td><strong>${cat.label}</strong></td>
+      <td><code>${cat.value}</code></td>
+      <td>${cat.position}</td>
+      <td><span class="badge ${cat.active ? 'badge-green' : 'badge-red'}">${cat.active ? 'Active' : 'Inactive'}</span></td>
+    </tr>`).join('');
+  }
+
+  // ============================================================
+  // ALERT
+  // ============================================================
+  function showAlert(message, type) {
+    const el = document.getElementById('alert');
+    el.textContent = message;
+    el.className = `alert alert-${type}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>
