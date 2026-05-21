@@ -173,6 +173,7 @@
     <button onclick="showSection('offers')">🏷️ Offres</button>
     <button onclick="showSection('add-offer')">➕ Ajouter une offre</button>
     <button onclick="showSection('categories')">📂 Catégories</button>
+    <button onclick="showSection('trash')">🗑️ Poubelle</button>
   </nav>
 
   <main>
@@ -450,9 +451,35 @@
   </div>
 </div>
 
-</main>
-</div>
 
+  <!-- POUBELLE -->
+<div id="section-trash" class="section">
+  <div class="section-header">
+    <h2>🗑️ Poubelle</h2>
+    <button class="btn-danger" onclick="emptyTrash()">💀 Vider la poubelle</button>
+  </div>
+  <p style="color:#6B7280;font-size:14px;margin-bottom:16px;">
+    Les offres supprimées sont conservées pendant <strong>365 jours</strong> avant suppression définitive. Vous pouvez les restaurer à tout moment.
+  </p>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Partenaire</th>
+          <th>Catégorie</th>
+          <th>Supprimée le</th>
+          <th>Suppression définitive</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="trash-table">
+        <tr><td colspan="6" class="loading">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
 <!-- MODAL EDIT -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
@@ -676,6 +703,7 @@
     if (name === 'offers') loadOffers();
     if (name === 'categories') loadCategories();
     if (name === 'add-offer') loadCategoriesForForm();
+    if (name === 'trash') loadTrash();
   }
 
   // ============================================================
@@ -802,12 +830,18 @@
  * RETOURNE : rien
  * MODIFIE : supprime l'offre dans Supabase, recharge la liste
  */
-  async function deleteOffer(id) {
-    if (!confirm('Supprimer cette offre ?')) return;
-    const ok = await supabaseDelete('offers', id);
-    if (ok) { showAlert('Offre supprimée !', 'success'); loadOffers(); }
-    else showAlert('Erreur lors de la suppression', 'error');
+ async function deleteOffer(id) {
+  const offer = allOffers.find(o => o.id === id);
+  const title = offer ? offer.title : 'cette offre';
+  if (!confirm(`Envoyer "${title}" à la poubelle ?`)) return;
+  const ok = await supabaseUpdate('offers', id, { deleted_at: new Date().toISOString() });
+  if (ok) {
+    showAlert(`🗑️ Offre "${title}" déplacée dans la poubelle.`, 'success', 0);
+    loadOffers();
+  } else {
+    showAlert('❌ Erreur lors de la suppression', 'error', 0);
   }
+}
 
   // ============================================================
   // AJOUTER OFFRE
@@ -1375,7 +1409,122 @@ async function deleteSubcategory(id) {
     showAlert('Erreur lors de la suppression', 'error');
   }
 }
+  // ============================================================
+  // POUBELLE
+  // ============================================================
 
+  /**
+ * FONCTION : loadTrash
+ * DESCRIPTION : Charge et affiche les offres supprimées (poubelle)
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #trash-table
+ */
+async function loadTrash() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/offers?deleted_at=not.is.null&select=*&order=deleted_at.desc`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    }
+  });
+  const trashedOffers = await response.json();
+  const tbody = document.getElementById('trash-table');
+
+  if (!trashedOffers.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9CA3AF;padding:20px;">La poubelle est vide</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = trashedOffers.map(o => {
+    const cat = allCategories.find(c => c.id === o.category_id);
+    const deletedAt = new Date(o.deleted_at);
+    const deletedAtStr = deletedAt.toLocaleDateString('fr-FR');
+    const finalDeleteDate = new Date(deletedAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const finalDeleteStr = finalDeleteDate.toLocaleDateString('fr-FR');
+    const daysLeft = Math.ceil((finalDeleteDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+    return `<tr>
+      <td><strong>${o.title}</strong></td>
+      <td>${o.partner_name}</td>
+      <td>${cat ? cat.icon + ' ' + cat.label : '-'}</td>
+      <td>${deletedAtStr}</td>
+      <td style="color:${daysLeft < 30 ? '#EF4444' : '#6B7280'};">
+        ${finalDeleteStr} <small>(${daysLeft} jours)</small>
+      </td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-edit" onclick="restoreOffer('${o.id}', '${o.title}')">♻️ Restaurer</button>
+        <button class="btn-danger" onclick="permanentDelete('${o.id}', '${o.title}')">💀 Supprimer</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/**
+ * FONCTION : restoreOffer
+ * DESCRIPTION : Restaure une offre depuis la poubelle
+ * PARAMÈTRES :
+ *   - id (string) : UUID de l'offre à restaurer
+ *   - title (string) : titre de l'offre pour le message
+ * RETOURNE : rien
+ * MODIFIE : remet deleted_at à NULL dans Supabase, recharge la poubelle
+ */
+async function restoreOffer(id, title) {
+  if (!confirm(`Restaurer l'offre "${title}" ?`)) return;
+  const ok = await supabaseUpdate('offers', id, { deleted_at: null });
+  if (ok) {
+    showAlert(`✅ Offre "${title}" restaurée !`, 'success', 0);
+    loadTrash();
+    loadAll();
+  } else {
+    showAlert('❌ Erreur lors de la restauration', 'error', 0);
+  }
+}
+
+/**
+ * FONCTION : permanentDelete
+ * DESCRIPTION : Supprime définitivement une offre de la base de données
+ * PARAMÈTRES :
+ *   - id (string) : UUID de l'offre
+ *   - title (string) : titre de l'offre pour le message
+ * RETOURNE : rien
+ * MODIFIE : supprime l'offre définitivement dans Supabase
+ */
+async function permanentDelete(id, title) {
+  if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT "${title}" ? Cette action est irréversible !`)) return;
+  const ok = await supabaseDelete('offers', id);
+  if (ok) {
+    showAlert(`🗑️ Offre "${title}" supprimée définitivement.`, 'success', 0);
+    loadTrash();
+  } else {
+    showAlert('❌ Erreur lors de la suppression', 'error', 0);
+  }
+}
+
+/**
+ * FONCTION : emptyTrash
+ * DESCRIPTION : Vide complètement la poubelle (suppression définitive de toutes les offres supprimées)
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : supprime toutes les offres avec deleted_at non null dans Supabase
+ */
+async function emptyTrash() {
+  if (!confirm('⚠️ Vider toute la poubelle ? Cette action est IRRÉVERSIBLE !')) return;
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/offers?deleted_at=not.is.null`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    }
+  });
+  if (response.ok) {
+    showAlert('🗑️ Poubelle vidée !', 'success', 0);
+    loadTrash();
+    loadAll();
+  } else {
+    showAlert('❌ Erreur lors du vidage', 'error', 0);
+  }
+}
+  
   // ============================================================
   // ALERT
   // ============================================================
