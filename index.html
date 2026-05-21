@@ -340,29 +340,112 @@
     </div>
 
     <!-- CATEGORIES -->
-    <div id="section-categories" class="section">
-      <div class="section-header">
-        <h2>Catégories</h2>
+   <!-- CATEGORIES -->
+<div id="section-categories" class="section">
+  <div class="section-header">
+    <h2>Catégories</h2>
+    <button class="btn-primary" onclick="showAddCategory()">➕ Nouvelle catégorie</button>
+  </div>
+
+  <!-- Formulaire ajout catégorie -->
+  <div id="add-category-form" style="display:none;margin-bottom:20px;">
+    <div class="form-card">
+      <h3>Nouvelle catégorie</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" id="new-cat-label" placeholder="Ex: Bien-être">
+        </div>
+        <div class="form-group">
+          <label>Valeur (slug) *</label>
+          <input type="text" id="new-cat-value" placeholder="Ex: bien-etre">
+        </div>
+        <div class="form-group">
+          <label>Icône (emoji) *</label>
+          <input type="text" id="new-cat-icon" placeholder="Ex: 💆">
+        </div>
+        <div class="form-group">
+          <label>Position</label>
+          <input type="number" id="new-cat-position" placeholder="Ex: 10" value="10">
+        </div>
       </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Icône</th>
-              <th>Nom</th>
-              <th>Valeur</th>
-              <th>Position</th>
-              <th>Statut</th>
-            </tr>
-          </thead>
-          <tbody id="categories-table">
-            <tr><td colspan="5" class="loading">Chargement...</td></tr>
-          </tbody>
-        </table>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addCategory()">✅ Ajouter</button>
+        <button onclick="document.getElementById('add-category-form').style.display='none'" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste catégories -->
+  <div class="table-wrapper" style="margin-bottom:20px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Icône</th>
+          <th>Nom</th>
+          <th>Valeur</th>
+          <th>Position</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="categories-table">
+        <tr><td colspan="6" class="loading">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sous-catégories de la catégorie sélectionnée -->
+  <div id="subcategories-section" style="display:none;">
+    <div class="section-header">
+      <h2 id="subcategories-title">Sous-catégories</h2>
+      <button class="btn-primary" onclick="showAddSubcategory()">➕ Nouvelle sous-catégorie</button>
+    </div>
+
+    <!-- Formulaire ajout sous-catégorie -->
+    <div id="add-subcategory-form" style="display:none;margin-bottom:20px;">
+      <div class="form-card">
+        <h3>Nouvelle sous-catégorie</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" id="new-subcat-label" placeholder="Ex: Vins & Spiritueux">
+          </div>
+          <div class="form-group">
+            <label>Icône (emoji)</label>
+            <input type="text" id="new-subcat-icon" placeholder="Ex: 🍷">
+          </div>
+          <div class="form-group">
+            <label>Position</label>
+            <input type="number" id="new-subcat-position" placeholder="Ex: 1" value="1">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="addSubcategory()">✅ Ajouter</button>
+          <button onclick="document.getElementById('add-subcategory-form').style.display='none'" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">Annuler</button>
+        </div>
       </div>
     </div>
 
-  </main>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Icône</th>
+            <th>Nom</th>
+            <th>Position</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="subcategories-table">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
 </div>
 
 <!-- MODAL EDIT -->
@@ -593,6 +676,7 @@
   let allOffers = [];
   let allCategories = [];
   let allSubcategories = [];
+  let currentCategoryId = null;
 
   /**
  * FONCTION : loadAll
@@ -1012,23 +1096,262 @@
   // CATEGORIES
   // ============================================================
   /**
+ /**
  * FONCTION : loadCategories
- * DESCRIPTION : Charge et affiche la liste des catégories
+ * DESCRIPTION : Charge et affiche la liste des catégories avec actions modifier/supprimer
  * PARAMÈTRES : aucun
  * RETOURNE : rien
  * MODIFIE : contenu de #categories-table
  */
-  
-  async function loadCategories() {
-    const tbody = document.getElementById('categories-table');
-    tbody.innerHTML = allCategories.map(cat => `<tr>
-      <td style="font-size:24px">${cat.icon}</td>
-      <td><strong>${cat.label}</strong></td>
-      <td><code>${cat.value}</code></td>
-      <td>${cat.position}</td>
-      <td><span class="badge ${cat.active ? 'badge-green' : 'badge-red'}">${cat.active ? 'Active' : 'Inactive'}</span></td>
-    </tr>`).join('');
+async function loadCategories() {
+  allCategories = await supabaseQuery('categories', { select: '*', order: 'position' });
+  const tbody = document.getElementById('categories-table');
+  tbody.innerHTML = allCategories.map(cat => `<tr>
+    <td style="font-size:24px;">${cat.icon}</td>
+    <td><strong>${cat.label}</strong></td>
+    <td><code>${cat.value}</code></td>
+    <td>${cat.position}</td>
+    <td><span class="badge ${cat.active ? 'badge-green' : 'badge-red'}">${cat.active ? 'Active' : 'Inactive'}</span></td>
+    <td style="display:flex;gap:6px;">
+      <button class="btn-edit" onclick="viewSubcategories('${cat.id}', '${cat.label}', '${cat.icon}')">📂 Sous-catégories</button>
+      <button class="btn-edit" onclick="openEditCategory('${cat.id}')">✏️ Modifier</button>
+      <button class="btn-danger" onclick="deleteCategory('${cat.id}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+
+/**
+ * FONCTION : showAddCategory
+ * DESCRIPTION : Affiche ou masque le formulaire d'ajout de catégorie
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : affichage de #add-category-form
+ */
+function showAddCategory() {
+  const form = document.getElementById('add-category-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+/**
+ * FONCTION : addCategory
+ * DESCRIPTION : Ajoute une nouvelle catégorie dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #new-cat-*)
+ * RETOURNE : rien
+ * MODIFIE : insère une catégorie dans Supabase, recharge la liste
+ */
+async function addCategory() {
+  const label = document.getElementById('new-cat-label').value.trim();
+  const value = document.getElementById('new-cat-value').value.trim();
+  const icon = document.getElementById('new-cat-icon').value.trim();
+  const position = parseInt(document.getElementById('new-cat-position').value) || 10;
+
+  if (!label || !value || !icon) {
+    showAlert('Merci de remplir tous les champs obligatoires', 'error');
+    return;
   }
+
+  const ok = await supabaseInsert('categories', { label, value, icon, position, active: true });
+  if (ok) {
+    showAlert('Catégorie ajoutée !', 'success');
+    document.getElementById('new-cat-label').value = '';
+    document.getElementById('new-cat-value').value = '';
+    document.getElementById('new-cat-icon').value = '';
+    document.getElementById('add-category-form').style.display = 'none';
+    loadCategories();
+  } else {
+    showAlert('Erreur lors de l\'ajout', 'error');
+  }
+}
+
+/**
+ * FONCTION : deleteCategory
+ * DESCRIPTION : Supprime une catégorie après confirmation
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la catégorie à supprimer
+ * RETOURNE : rien
+ * MODIFIE : supprime la catégorie dans Supabase, recharge la liste
+ */
+async function deleteCategory(id) {
+  if (!confirm('Supprimer cette catégorie ? Les offres associées ne seront pas supprimées.')) return;
+  const ok = await supabaseDelete('categories', id);
+  if (ok) { showAlert('Catégorie supprimée !', 'success'); loadCategories(); }
+  else showAlert('Erreur lors de la suppression', 'error');
+}
+
+/**
+ * FONCTION : openEditCategory
+ * DESCRIPTION : Ouvre une modal pour modifier une catégorie
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la catégorie à modifier
+ * RETOURNE : rien
+ * MODIFIE : affiche une boite de dialogue avec les valeurs actuelles
+ */
+async function openEditCategory(id) {
+  const cat = allCategories.find(c => c.id === id);
+  if (!cat) return;
+
+  const label = prompt('Nom de la catégorie :', cat.label);
+  if (label === null) return;
+  const icon = prompt('Icône (emoji) :', cat.icon);
+  if (icon === null) return;
+  const position = prompt('Position :', cat.position);
+  if (position === null) return;
+
+  const ok = await supabaseUpdate('categories', id, {
+    label: label.trim(),
+    icon: icon.trim(),
+    position: parseInt(position) || cat.position
+  });
+
+  if (ok) { showAlert('Catégorie modifiée !', 'success'); loadCategories(); }
+  else showAlert('Erreur lors de la modification', 'error');
+}
+
+/**
+ * FONCTION : viewSubcategories
+ * DESCRIPTION : Affiche les sous-catégories d'une catégorie sélectionnée
+ * PARAMÈTRES :
+ *   - categoryId (string) : UUID de la catégorie
+ *   - categoryLabel (string) : Nom de la catégorie pour le titre
+ *   - categoryIcon (string) : Icône de la catégorie
+ * RETOURNE : rien
+ * MODIFIE : contenu de #subcategories-table, affichage de #subcategories-section
+ */
+function viewSubcategories(categoryId, categoryLabel, categoryIcon) {
+  currentCategoryId = categoryId;
+  document.getElementById('subcategories-title').textContent = categoryIcon + ' ' + categoryLabel + ' — Sous-catégories';
+  document.getElementById('subcategories-section').style.display = 'block';
+  document.getElementById('subcategories-section').scrollIntoView({ behavior: 'smooth' });
+  loadSubcategories(categoryId);
+}
+
+/**
+ * FONCTION : loadSubcategories
+ * DESCRIPTION : Charge et affiche les sous-catégories d'une catégorie
+ * PARAMÈTRES :
+ *   - categoryId (string) : UUID de la catégorie
+ * RETOURNE : rien
+ * MODIFIE : contenu de #subcategories-table
+ */
+async function loadSubcategories(categoryId) {
+  const subs = allSubcategories.filter(s => s.category_id === categoryId);
+  const tbody = document.getElementById('subcategories-table');
+  if (subs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#9CA3AF;padding:20px;">Aucune sous-catégorie</td></tr>';
+    return;
+  }
+  tbody.innerHTML = subs.map(sub => `<tr>
+    <td style="font-size:20px;">${sub.icon ?? '🏷️'}</td>
+    <td><strong>${sub.label}</strong></td>
+    <td>${sub.position}</td>
+    <td><span class="badge ${sub.active ? 'badge-green' : 'badge-red'}">${sub.active ? 'Active' : 'Inactive'}</span></td>
+    <td style="display:flex;gap:6px;">
+      <button class="btn-edit" onclick="openEditSubcategory('${sub.id}')">✏️ Modifier</button>
+      <button class="btn-danger" onclick="deleteSubcategory('${sub.id}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+
+/**
+ * FONCTION : showAddSubcategory
+ * DESCRIPTION : Affiche ou masque le formulaire d'ajout de sous-catégorie
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : affichage de #add-subcategory-form
+ */
+function showAddSubcategory() {
+  const form = document.getElementById('add-subcategory-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+/**
+ * FONCTION : addSubcategory
+ * DESCRIPTION : Ajoute une nouvelle sous-catégorie dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #new-subcat-*)
+ * RETOURNE : rien
+ * MODIFIE : insère une sous-catégorie dans Supabase, recharge la liste
+ */
+async function addSubcategory() {
+  const label = document.getElementById('new-subcat-label').value.trim();
+  const icon = document.getElementById('new-subcat-icon').value.trim();
+  const position = parseInt(document.getElementById('new-subcat-position').value) || 1;
+
+  if (!label) {
+    showAlert('Merci de renseigner le nom', 'error');
+    return;
+  }
+
+  const ok = await supabaseInsert('subcategories', {
+    label, icon: icon || '🏷️',
+    position, active: true,
+    category_id: currentCategoryId
+  });
+
+  if (ok) {
+    showAlert('Sous-catégorie ajoutée !', 'success');
+    document.getElementById('new-subcat-label').value = '';
+    document.getElementById('new-subcat-icon').value = '';
+    document.getElementById('add-subcategory-form').style.display = 'none';
+    allSubcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
+    loadSubcategories(currentCategoryId);
+  } else {
+    showAlert('Erreur lors de l\'ajout', 'error');
+  }
+}
+
+/**
+ * FONCTION : openEditSubcategory
+ * DESCRIPTION : Ouvre une boite de dialogue pour modifier une sous-catégorie
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la sous-catégorie à modifier
+ * RETOURNE : rien
+ * MODIFIE : met à jour la sous-catégorie dans Supabase
+ */
+async function openEditSubcategory(id) {
+  const sub = allSubcategories.find(s => s.id === id);
+  if (!sub) return;
+
+  const label = prompt('Nom :', sub.label);
+  if (label === null) return;
+  const icon = prompt('Icône (emoji) :', sub.icon ?? '🏷️');
+  if (icon === null) return;
+  const position = prompt('Position :', sub.position);
+  if (position === null) return;
+
+  const ok = await supabaseUpdate('subcategories', id, {
+    label: label.trim(),
+    icon: icon.trim(),
+    position: parseInt(position) || sub.position
+  });
+
+  if (ok) {
+    showAlert('Sous-catégorie modifiée !', 'success');
+    allSubcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
+    loadSubcategories(currentCategoryId);
+  } else {
+    showAlert('Erreur lors de la modification', 'error');
+  }
+}
+
+/**
+ * FONCTION : deleteSubcategory
+ * DESCRIPTION : Supprime une sous-catégorie après confirmation
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la sous-catégorie à supprimer
+ * RETOURNE : rien
+ * MODIFIE : supprime la sous-catégorie dans Supabase, recharge la liste
+ */
+async function deleteSubcategory(id) {
+  if (!confirm('Supprimer cette sous-catégorie ?')) return;
+  const ok = await supabaseDelete('subcategories', id);
+  if (ok) {
+    showAlert('Sous-catégorie supprimée !', 'success');
+    allSubcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
+    loadSubcategories(currentCategoryId);
+  } else {
+    showAlert('Erreur lors de la suppression', 'error');
+  }
+}
 
   // ============================================================
   // ALERT
