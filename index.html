@@ -184,6 +184,7 @@
     <button onclick="showSection('add-offer')">➕ Ajouter une offre</button>
     <button onclick="showSection('categories')">📂 Catégories</button>
     <button onclick="showSection('trash')">🗑️ Poubelle</button>
+    <button onclick="showSection('settings')">⚙️ Paramètres</button>
   </nav>
 
   <main>
@@ -489,6 +490,107 @@
     </table>
   </div>
 </div>
+    <!-- PARAMÈTRES -->
+<div id="section-settings" class="section">
+  <div class="section-header">
+    <h2>⚙️ Paramètres</h2>
+  </div>
+
+  <!-- Sécurité -->
+  <div class="form-card" style="border-bottom-color:#EF4444;">
+    <h3>🔑 Sécurité</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nouveau mot de passe</label>
+        <input type="password" id="new-password" placeholder="Nouveau mot de passe...">
+      </div>
+      <div class="form-group">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="confirm-password" placeholder="Confirmer...">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="changePassword()">💾 Changer le mot de passe</button>
+    </div>
+    <p style="font-size:12px;color:#9CA3AF;margin-top:8px;">⚠️ Notez bien votre nouveau mot de passe — il ne peut pas être récupéré.</p>
+  </div>
+
+  <!-- Poubelle -->
+  <div class="form-card">
+    <h3>🗑️ Poubelle</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Délai avant suppression définitive (jours)</label>
+        <input type="number" id="trash-delay" min="1" max="365" value="365">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="saveTrashDelay()">💾 Sauvegarder</button>
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div class="form-card">
+    <h3>📧 Email de contact</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Email destinataire des messages</label>
+        <input type="email" id="settings-email" placeholder="contact@alliance-avantages.fr" value="rjermouni@gmail.com">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="saveEmail()">💾 Sauvegarder</button>
+    </div>
+  </div>
+
+  <!-- Bannière événement -->
+  <div class="form-card" style="border-bottom-color:#FF6B00;">
+    <h3>🎄 Bannière événement</h3>
+    <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+      Affiche un message spécial en haut de l'app (Noël, tombola, jeux concours...). Laissez vide pour désactiver.
+    </p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Emoji</label>
+        <input type="text" id="banner-emoji" placeholder="Ex: 🎄">
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <input type="text" id="banner-message" placeholder="Ex: Joyeux Noël ! Offres spéciales jusqu'au 31/12">
+      </div>
+      <div class="form-group">
+        <label>Couleur de fond</label>
+        <input type="color" id="banner-color" value="#FF6B00">
+      </div>
+      <div class="form-group">
+        <label>Lien (optionnel)</label>
+        <input type="url" id="banner-link" placeholder="https://...">
+      </div>
+    </div>
+    <div style="margin-top:12px;" id="banner-preview-wrapper" style="display:none;">
+      <p style="font-size:12px;color:#6B7280;margin-bottom:6px;">Aperçu :</p>
+      <div id="banner-preview" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:8px;">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-orange" onclick="previewBanner()">👁️ Aperçu</button>
+      <button class="btn-primary" onclick="saveBanner()">💾 Publier</button>
+      <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🗑️ Désactiver</button>
+    </div>
+  </div>
+
+  <!-- Sauvegarde -->
+  <div class="form-card" style="border-bottom-color:#10B981;">
+    <h3>💾 Sauvegarde</h3>
+    <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+      Exportez vos données pour les sauvegarder ou les restaurer en cas de problème.
+    </p>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="exportSQL()">📥 Exporter la base SQL</button>
+    </div>
+  </div>
+
+</div>
 </main>
 <!-- MODAL EDIT -->
 <div class="modal-overlay" id="edit-modal">
@@ -570,15 +672,17 @@
  * MODIFIE : affichage de #login-screen et #app, lance loadAll()
  */
   function login() {
-    const pwd = document.getElementById('login-password').value;
-    if (pwd === ADMIN_PASSWORD) {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      loadAll();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
+  const pwd = document.getElementById('login-password').value;
+  const savedPassword = localStorage.getItem('admin_password') || ADMIN_PASSWORD;
+  if (pwd === savedPassword) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+    loadSettings();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
   }
+}
   
   /**
  * FONCTION : logout
@@ -714,6 +818,7 @@
     if (name === 'categories') loadCategories();
     if (name === 'add-offer') loadCategoriesForForm();
     if (name === 'trash') loadTrash();
+    if (name === 'settings') loadSettings();
   }
 
   // ============================================================
@@ -1536,7 +1641,200 @@ async function emptyTrash() {
     showAlert('❌ Erreur lors du vidage', 'error', 0);
   }
 }
-  
+  /**
+ * FONCTION : changePassword
+ * DESCRIPTION : Change le mot de passe admin et le sauvegarde en localStorage
+ * PARAMÈTRES : aucun (lit #new-password et #confirm-password)
+ * RETOURNE : rien
+ * MODIFIE : ADMIN_PASSWORD en mémoire et dans localStorage
+ */
+function changePassword() {
+  const newPwd = document.getElementById('new-password').value;
+  const confirmPwd = document.getElementById('confirm-password').value;
+
+  if (!newPwd || newPwd.length < 8) {
+    showAlert('❌ Le mot de passe doit contenir au moins 8 caractères', 'error', 0);
+    return;
+  }
+  if (newPwd !== confirmPwd) {
+    showAlert('❌ Les mots de passe ne correspondent pas', 'error', 0);
+    return;
+  }
+
+  localStorage.setItem('admin_password', newPwd);
+  document.getElementById('new-password').value = '';
+  document.getElementById('confirm-password').value = '';
+  showAlert('✅ Mot de passe changé avec succès !', 'success', 0);
+}
+
+/**
+ * FONCTION : saveTrashDelay
+ * DESCRIPTION : Sauvegarde le délai de suppression définitive de la poubelle
+ * PARAMÈTRES : aucun (lit #trash-delay)
+ * RETOURNE : rien
+ * MODIFIE : localStorage clé 'trash_delay'
+ */
+function saveTrashDelay() {
+  const delay = parseInt(document.getElementById('trash-delay').value);
+  if (!delay || delay < 1 || delay > 365) {
+    showAlert('❌ Délai invalide (1 à 365 jours)', 'error', 0);
+    return;
+  }
+  localStorage.setItem('trash_delay', delay);
+  showAlert(`✅ Délai sauvegardé : ${delay} jours`, 'success', 0);
+}
+
+/**
+ * FONCTION : saveEmail
+ * DESCRIPTION : Sauvegarde l'email destinataire des messages de contact
+ * PARAMÈTRES : aucun (lit #settings-email)
+ * RETOURNE : rien
+ * MODIFIE : localStorage clé 'contact_email'
+ */
+function saveEmail() {
+  const email = document.getElementById('settings-email').value.trim();
+  if (!email || !email.includes('@')) {
+    showAlert('❌ Email invalide', 'error', 0);
+    return;
+  }
+  localStorage.setItem('contact_email', email);
+  showAlert(`✅ Email sauvegardé : ${email}`, 'success', 0);
+}
+
+/**
+ * FONCTION : previewBanner
+ * DESCRIPTION : Affiche un aperçu de la bannière événement
+ * PARAMÈTRES : aucun (lit #banner-emoji, #banner-message, #banner-color)
+ * RETOURNE : rien
+ * MODIFIE : contenu et style de #banner-preview
+ */
+function previewBanner() {
+  const emoji = document.getElementById('banner-emoji').value;
+  const message = document.getElementById('banner-message').value;
+  const color = document.getElementById('banner-color').value;
+
+  if (!message) {
+    showAlert('❌ Renseignez un message pour la bannière', 'error', 0);
+    return;
+  }
+
+  const preview = document.getElementById('banner-preview');
+  preview.style.backgroundColor = color;
+  preview.innerHTML = `
+    <span style="font-size:20px;">${emoji}</span>
+    <span style="color:white;font-size:14px;font-weight:600;">${message}</span>
+  `;
+  document.getElementById('banner-preview-wrapper').style.display = 'block';
+}
+
+/**
+ * FONCTION : saveBanner
+ * DESCRIPTION : Sauvegarde et publie la bannière événement dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #banner-*)
+ * RETOURNE : rien
+ * MODIFIE : table settings dans Supabase (ou localStorage si pas de table)
+ */
+async function saveBanner() {
+  const emoji = document.getElementById('banner-emoji').value;
+  const message = document.getElementById('banner-message').value.trim();
+  const color = document.getElementById('banner-color').value;
+  const link = document.getElementById('banner-link').value.trim();
+
+  if (!message) {
+    showAlert('❌ Renseignez un message pour la bannière', 'error', 0);
+    return;
+  }
+
+  const banner = { emoji, message, color, link, active: true };
+  localStorage.setItem('event_banner', JSON.stringify(banner));
+  showAlert('✅ Bannière publiée ! Elle apparaîtra dans l\'app au prochain chargement.', 'success', 0);
+}
+
+/**
+ * FONCTION : clearBanner
+ * DESCRIPTION : Désactive et supprime la bannière événement
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : supprime 'event_banner' du localStorage
+ */
+function clearBanner() {
+  localStorage.removeItem('event_banner');
+  document.getElementById('banner-emoji').value = '';
+  document.getElementById('banner-message').value = '';
+  document.getElementById('banner-preview-wrapper').style.display = 'none';
+  showAlert('✅ Bannière désactivée', 'success', 0);
+}
+
+/**
+ * FONCTION : exportSQL
+ * DESCRIPTION : Exporte toutes les offres et catégories en format SQL téléchargeable
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : déclenche un téléchargement de fichier .sql
+ */
+async function exportSQL() {
+  showAlert('⏳ Préparation de l\'export...', 'success', 0);
+
+  const offers = await supabaseQuery('offers', { select: '*', order: 'created_at' });
+  const categories = await supabaseQuery('categories', { select: '*', order: 'position' });
+  const subcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
+
+  const date = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+  let sql = `-- Export Alliance Avantages — ${date}\n`;
+  sql += `-- Généré automatiquement depuis l'interface admin\n\n`;
+
+  sql += `-- CATÉGORIES\n`;
+  categories.forEach(cat => {
+    sql += `INSERT INTO categories (id, value, label, icon, position, active) VALUES ('${cat.id}', '${cat.value}', '${cat.label}', '${cat.icon}', ${cat.position}, ${cat.active});\n`;
+  });
+
+  sql += `\n-- SOUS-CATÉGORIES\n`;
+  subcategories.forEach(sub => {
+    sql += `INSERT INTO subcategories (id, category_id, label, icon, position, active) VALUES ('${sub.id}', '${sub.category_id}', '${sub.label}', '${sub.icon ?? ''}', ${sub.position}, ${sub.active});\n`;
+  });
+
+  sql += `\n-- OFFRES\n`;
+  offers.forEach(o => {
+    sql += `INSERT INTO offers (id, title, description, discount, category_id, city, partner_name, partner_url, flash, is_new, active, position) VALUES ('${o.id}', '${(o.title||'').replace(/'/g,"''")}', '${(o.description||'').replace(/'/g,"''")}', '${o.discount}', '${o.category_id}', '${o.city}', '${o.partner_name}', '${o.partner_url}', ${o.flash}, ${o.is_new}, ${o.active}, ${o.position});\n`;
+  });
+
+  const blob = new Blob([sql], { type: 'text/sql' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `alliance-avantages-backup-${date}.sql`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showAlert(`✅ Export téléchargé : ${offers.length} offres, ${categories.length} catégories`, 'success', 0);
+}
+
+/**
+ * FONCTION : loadSettings
+ * DESCRIPTION : Charge les paramètres sauvegardés depuis localStorage au démarrage
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : valeurs des champs de la section paramètres
+ */
+function loadSettings() {
+  const trashDelay = localStorage.getItem('trash_delay');
+  if (trashDelay) document.getElementById('trash-delay').value = trashDelay;
+
+  const email = localStorage.getItem('contact_email');
+  if (email) document.getElementById('settings-email').value = email;
+
+  const banner = localStorage.getItem('event_banner');
+  if (banner) {
+    const b = JSON.parse(banner);
+    document.getElementById('banner-emoji').value = b.emoji || '';
+    document.getElementById('banner-message').value = b.message || '';
+    document.getElementById('banner-color').value = b.color || '#FF6B00';
+    document.getElementById('banner-link').value = b.link || '';
+  }
+
+  const savedPassword = localStorage.getItem('admin_password');
+  if (savedPassword) window._ADMIN_PASSWORD = savedPassword;
+}
   // ============================================================
   // ALERT
   // ============================================================
