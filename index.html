@@ -871,9 +871,7 @@
       return;
     }
 
-    const city = document.getElementById('new-city').value.trim() || 'En ligne';
-
-    const data = {  title, description, discount: discount || null, city: city,
+    const data = {  title, description, discount: discount || null, city: city || 'En ligne',
       partner_name: partnerName, partner_url: partnerUrl,
       category_id: categoryId,
       subcategory_id: subcategoryId || null,
