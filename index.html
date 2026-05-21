@@ -871,11 +871,9 @@
       return;
     }
 
-    const citySelect = document.getElementById('new-city-select').value;
-    const cityCustom = document.getElementById('new-city').value.trim();
-    const finalCity = citySelect === 'custom' ? (cityCustom || 'En ligne') : citySelect;
+    const city = document.getElementById('new-city').value.trim() || 'En ligne';
 
-    const data = {  title, description, discount: discount || null, city: finalCity,
+    const data = {  title, description, discount: discount || null, city: city,
       partner_name: partnerName, partner_url: partnerUrl,
       category_id: categoryId,
       subcategory_id: subcategoryId || null,
