@@ -1387,7 +1387,7 @@ async function deleteSubcategory(id) {
  * MODIFIE : contenu, classe CSS et affichage de #alert
  */
   
-  function showAlert(message, type, duration = 3000) {
+  function showAlert(message, type, duration = 10000) {
     const el = document.getElementById('alert');
     el.textContent = message;
     el.className = `alert alert-${type}`;
