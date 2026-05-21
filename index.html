@@ -266,16 +266,21 @@
             <input type="text" id="new-discount" placeholder="Ex: -20%, 2 pour 1, Gratuit...">
           </div>
           <div class="form-group">
-            <label>Ville</label>
-            <input type="text" id="new-city" placeholder="Ex: Nice, Antibes, En ligne...">
+            <label>Disponibilité</label>
+            <select id="new-city-select" onchange="toggleCityInput(this.value)" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;margin-bottom:6px;">
+              <option value="En ligne">En ligne</option>
+              <option value="France">France entière</option>
+              <option value="custom">Ville spécifique...</option>
+            </select>
+            <input type="text" id="new-city" placeholder="Ex: Nice, Antibes, Cannes..." style="display:none;">
           </div>
           <div class="form-group">
             <label>Partenaire *</label>
             <input type="text" id="new-partner-name" placeholder="Nom du partenaire">
           </div>
           <div class="form-group">
-            <label>URL Partenaire *</label>
-            <input type="url" id="new-partner-url" placeholder="https://...">
+            <label>URL de l'offre *</label>
+            <input type="url" id="new-partner-url" placeholder="https://... (lien direct vers l'offre)">
           </div>
           <div class="form-group">
             <label>Catégorie *</label>
@@ -861,13 +866,16 @@
     const isNew = document.getElementById('new-is-new').checked;
     const active = document.getElementById('new-active').checked;
 
-    if (!title || !description || !discount || !partnerName || !partnerUrl || !categoryId) {
-      showAlert('Merci de remplir tous les champs obligatoires (*)', 'error');
+    if (!title || !partnerName || !partnerUrl || !categoryId) {
+      showAlert('Merci de remplir les champs obligatoires : Titre, Partenaire, URL de l\'offre et Catégorie', 'error');
       return;
     }
 
-    const data = {
-      title, description, discount, city: city || 'En ligne',
+    const citySelect = document.getElementById('new-city-select').value;
+    const cityCustom = document.getElementById('new-city').value.trim();
+    const finalCity = citySelect === 'custom' ? (cityCustom || 'En ligne') : citySelect;
+
+    const data = {  title, description, discount: discount || null, city: finalCity,
       partner_name: partnerName, partner_url: partnerUrl,
       category_id: categoryId,
       subcategory_id: subcategoryId || null,
