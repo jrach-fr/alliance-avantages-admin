@@ -622,7 +622,80 @@
     </table>
   </div>
 </div>
-  
+
+<!-- MODAL EDIT CATEGORIE -->
+<div class="modal-overlay" id="edit-category-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Modifier la catégorie</h3>
+      <button class="modal-close" onclick="closeEditCategory()">×</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="edit-cat-id">
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" id="edit-cat-label" placeholder="Ex: Bien-être">
+      </div>
+      <div class="form-group">
+        <label>Icône (emoji) *</label>
+        <input type="text" id="edit-cat-icon" placeholder="Ex: 💆">
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <input type="number" id="edit-cat-position" placeholder="Ex: 5" min="1">
+      </div>
+      <div class="form-group">
+        <label>Statut</label>
+        <div class="toggle-group">
+          <label class="toggle-item">
+            <input type="checkbox" id="edit-cat-active"> Active
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px;">
+      <button class="btn-primary" onclick="saveEditCategory()">💾 Sauvegarder</button>
+      <button class="btn-danger" onclick="closeEditCategory()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT SOUS-CATEGORIE -->
+<div class="modal-overlay" id="edit-subcategory-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Modifier la sous-catégorie</h3>
+      <button class="modal-close" onclick="closeEditSubcategory()">×</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="edit-subcat-id">
+      <div class="form-group">
+        <label>Nom *</label>
+        <input type="text" id="edit-subcat-label" placeholder="Ex: Vins & Spiritueux">
+      </div>
+      <div class="form-group">
+        <label>Icône (emoji)</label>
+        <input type="text" id="edit-subcat-icon" placeholder="Ex: 🍷">
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <input type="number" id="edit-subcat-position" placeholder="Ex: 1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Statut</label>
+        <div class="toggle-group">
+          <label class="toggle-item">
+            <input type="checkbox" id="edit-subcat-active"> Active
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px;">
+      <button class="btn-primary" onclick="saveEditSubcategory()">💾 Sauvegarder</button>
+      <button class="btn-danger" onclick="closeEditSubcategory()">Annuler</button>
+    </div>
+  </div>
+</div>
 <!-- MODAL EDIT -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
@@ -1423,31 +1496,63 @@ async function deleteCategory(id) {
 
 /**
  * FONCTION : openEditCategory
- * DESCRIPTION : Ouvre une modal pour modifier une catégorie
+ * DESCRIPTION : Ouvre la modal de modification d'une catégorie et pré-remplit les champs
  * PARAMÈTRES :
  *   - id (string) : UUID de la catégorie à modifier
  * RETOURNE : rien
- * MODIFIE : affiche une boite de dialogue avec les valeurs actuelles
+ * MODIFIE : valeurs des champs #edit-cat-*, affichage de #edit-category-modal
  */
-async function openEditCategory(id) {
+function openEditCategory(id) {
   const cat = allCategories.find(c => c.id === id);
   if (!cat) return;
+  document.getElementById('edit-cat-id').value = cat.id;
+  document.getElementById('edit-cat-label').value = cat.label;
+  document.getElementById('edit-cat-icon').value = cat.icon;
+  document.getElementById('edit-cat-position').value = cat.position;
+  document.getElementById('edit-cat-active').checked = cat.active;
+  document.getElementById('edit-category-modal').classList.add('open');
+}
 
-  const label = prompt('Nom de la catégorie :', cat.label);
-  if (label === null) return;
-  const icon = prompt('Icône (emoji) :', cat.icon);
-  if (icon === null) return;
-  const position = prompt('Position :', cat.position);
-  if (position === null) return;
+/**
+ * FONCTION : closeEditCategory
+ * DESCRIPTION : Ferme la modal de modification de catégorie
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : classe CSS de #edit-category-modal
+ */
+function closeEditCategory() {
+  document.getElementById('edit-category-modal').classList.remove('open');
+}
 
-  const ok = await supabaseUpdate('categories', id, {
-    label: label.trim(),
-    icon: icon.trim(),
-    position: parseInt(position) || cat.position
-  });
+/**
+ * FONCTION : saveEditCategory
+ * DESCRIPTION : Sauvegarde les modifications d'une catégorie dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #edit-cat-*)
+ * RETOURNE : rien
+ * MODIFIE : la catégorie dans Supabase, ferme la modal, recharge la liste
+ */
+async function saveEditCategory() {
+  const id = document.getElementById('edit-cat-id').value;
+  const label = document.getElementById('edit-cat-label').value.trim();
+  const icon = document.getElementById('edit-cat-icon').value.trim();
+  const position = parseInt(document.getElementById('edit-cat-position').value);
+  const active = document.getElementById('edit-cat-active').checked;
 
-  if (ok) { showAlert('Catégorie modifiée !', 'success'); loadCategories(); }
-  else showAlert('Erreur lors de la modification', 'error');
+  if (!label || !icon) {
+    showAlert('❌ Merci de remplir le nom et l\'icône', 'error', 0);
+    return;
+  }
+
+  const ok = await supabaseUpdate('categories', id, { label, icon, position, active });
+  if (ok) {
+    showAlert(`✅ Catégorie "${label}" modifiée !`, 'success', 0);
+    addLog('✏️ Modification catégorie', `"${label}" — position: ${position}`);
+    closeEditCategory();
+    allCategories = await supabaseQuery('categories', { select: '*', order: 'position' });
+    loadCategories();
+  } else {
+    showAlert('❌ Erreur lors de la modification', 'error', 0);
+  }
 }
 
 /**
@@ -1550,35 +1655,62 @@ async function addSubcategory() {
 
 /**
  * FONCTION : openEditSubcategory
- * DESCRIPTION : Ouvre une boite de dialogue pour modifier une sous-catégorie
+ * DESCRIPTION : Ouvre la modal de modification d'une sous-catégorie et pré-remplit les champs
  * PARAMÈTRES :
  *   - id (string) : UUID de la sous-catégorie à modifier
  * RETOURNE : rien
- * MODIFIE : met à jour la sous-catégorie dans Supabase
+ * MODIFIE : valeurs des champs #edit-subcat-*, affichage de #edit-subcategory-modal
  */
-async function openEditSubcategory(id) {
+function openEditSubcategory(id) {
   const sub = allSubcategories.find(s => s.id === id);
   if (!sub) return;
+  document.getElementById('edit-subcat-id').value = sub.id;
+  document.getElementById('edit-subcat-label').value = sub.label;
+  document.getElementById('edit-subcat-icon').value = sub.icon ?? '';
+  document.getElementById('edit-subcat-position').value = sub.position;
+  document.getElementById('edit-subcat-active').checked = sub.active;
+  document.getElementById('edit-subcategory-modal').classList.add('open');
+}
 
-  const label = prompt('Nom :', sub.label);
-  if (label === null) return;
-  const icon = prompt('Icône (emoji) :', sub.icon ?? '🏷️');
-  if (icon === null) return;
-  const position = prompt('Position :', sub.position);
-  if (position === null) return;
+/**
+ * FONCTION : closeEditSubcategory
+ * DESCRIPTION : Ferme la modal de modification de sous-catégorie
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : classe CSS de #edit-subcategory-modal
+ */
+function closeEditSubcategory() {
+  document.getElementById('edit-subcategory-modal').classList.remove('open');
+}
 
-  const ok = await supabaseUpdate('subcategories', id, {
-    label: label.trim(),
-    icon: icon.trim(),
-    position: parseInt(position) || sub.position
-  });
+/**
+ * FONCTION : saveEditSubcategory
+ * DESCRIPTION : Sauvegarde les modifications d'une sous-catégorie dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #edit-subcat-*)
+ * RETOURNE : rien
+ * MODIFIE : la sous-catégorie dans Supabase, ferme la modal, recharge la liste
+ */
+async function saveEditSubcategory() {
+  const id = document.getElementById('edit-subcat-id').value;
+  const label = document.getElementById('edit-subcat-label').value.trim();
+  const icon = document.getElementById('edit-subcat-icon').value.trim();
+  const position = parseInt(document.getElementById('edit-subcat-position').value);
+  const active = document.getElementById('edit-subcat-active').checked;
 
+  if (!label) {
+    showAlert('❌ Merci de renseigner le nom', 'error', 0);
+    return;
+  }
+
+  const ok = await supabaseUpdate('subcategories', id, { label, icon: icon || '🏷️', position, active });
   if (ok) {
-    showAlert('Sous-catégorie modifiée !', 'success');
+    showAlert(`✅ Sous-catégorie "${label}" modifiée !`, 'success', 0);
+    addLog('✏️ Modification sous-catégorie', `"${label}" — position: ${position}`);
+    closeEditSubcategory();
     allSubcategories = await supabaseQuery('subcategories', { select: '*', order: 'position' });
     loadSubcategories(currentCategoryId);
   } else {
-    showAlert('Erreur lors de la modification', 'error');
+    showAlert('❌ Erreur lors de la modification', 'error', 0);
   }
 }
 
