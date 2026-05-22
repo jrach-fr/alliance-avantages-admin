@@ -1510,6 +1510,10 @@ function openEditCategory(id) {
   document.getElementById('edit-cat-icon').value = cat.icon;
   document.getElementById('edit-cat-position').value = cat.position;
   document.getElementById('edit-cat-active').checked = cat.active;
+  
+  // Limite la position au nombre de catégories existantes
+  document.getElementById('edit-cat-position').max = allCategories.length;
+  
   document.getElementById('edit-category-modal').classList.add('open');
 }
 
@@ -1548,7 +1552,13 @@ async function saveEditCategory() {
     showAlert(`✅ Catégorie "${label}" modifiée !`, 'success', 0);
     addLog('✏️ Modification catégorie', `"${label}" — position: ${position}`);
     closeEditCategory();
-    allCategories = await supabaseQuery('categories', { select: '*', order: 'position' });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=position.asc`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      }
+    });
+    allCategories = await res.json();
     loadCategories();
   } else {
     showAlert('❌ Erreur lors de la modification', 'error', 0);
@@ -1670,6 +1680,10 @@ function openEditSubcategory(id) {
   document.getElementById('edit-subcat-position').value = sub.position;
   document.getElementById('edit-subcat-active').checked = sub.active;
   document.getElementById('edit-subcategory-modal').classList.add('open');
+
+  // Limite la position au nombre de sous-catégories de cette catégorie
+  const subsCount = allSubcategories.filter(s => s.category_id === sub.category_id).length;
+  document.getElementById('edit-subcat-position').max = subsCount;
 }
 
 /**
