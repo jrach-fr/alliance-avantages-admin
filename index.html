@@ -1952,6 +1952,7 @@ async function clearLogs() {
   if (res.ok) {
     await addLog('🗑️ Journal effacé', 'Effacement complet du journal des actions');
     showAlert('✅ Journal effacé', 'success', 0);
+    await new Promise(r => setTimeout(r, 500)); // Attend 500ms que Supabase enregistre
     loadLogs();
   } else {
     showAlert('❌ Erreur lors de l\'effacement', 'error', 0);
