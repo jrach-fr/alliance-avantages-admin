@@ -1877,41 +1877,43 @@ function loadSettings() {
   if (savedPassword) window._ADMIN_PASSWORD = savedPassword;
 }
 
-  /**
+ /**
  * FONCTION : addLog
- * DESCRIPTION : Enregistre une action dans le journal (localStorage)
+ * DESCRIPTION : Enregistre une action dans la table logs de Supabase
  *               Appelée automatiquement par toutes les fonctions qui modifient des données
- *               Limite à 500 entrées — les plus anciennes sont supprimées automatiquement
+ *               Les logs sont accessibles depuis n'importe quel appareil
  * PARAMÈTRES :
  *   - action (string) : type d'action ex: "Ajout offre", "Suppression catégorie"
  *   - detail (string) : détail de l'action ex: nom de l'offre concernée
  * RETOURNE : rien
- * MODIFIE : localStorage clé 'admin_logs'
+ * MODIFIE : table logs dans Supabase
  */
-function addLog(action, detail) {
-  const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+  
+async function addLog(action, detail) {
   const now = new Date();
-  const entry = {
+  await supabaseInsert('logs', {
     date: now.toLocaleDateString('fr-FR'),
     heure: now.toLocaleTimeString('fr-FR'),
     action,
     detail
-  };
-  // On ajoute en tête de liste et on limite à 500 entrées
-  logs.unshift(entry);
-  localStorage.setItem('admin_logs', JSON.stringify(logs.slice(0, 500)));
+  });
 }
-
+  
 /**
  * FONCTION : loadLogs
- * DESCRIPTION : Charge et affiche le journal des actions depuis localStorage
- *               Appelée quand on clique sur l'onglet Journal
+ * DESCRIPTION : Charge et affiche le journal des actions depuis Supabase
+ *               Affiche les 500 dernières actions triées du plus récent au plus ancien
  * PARAMÈTRES : aucun
  * RETOURNE : rien
  * MODIFIE : contenu de #logs-table
  */
-function loadLogs() {
-  const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+async function loadLogs() {
+  const logs = await supabaseQuery('logs', { 
+    select: '*', 
+    order: 'created_at.desc',
+    filter: 'limit=500'
+  });
+  
   const tbody = document.getElementById('logs-table');
 
   if (!logs.length) {
@@ -1919,27 +1921,41 @@ function loadLogs() {
     return;
   }
 
-  // Pour chaque entrée du journal, on crée une ligne dans le tableau
   tbody.innerHTML = logs.map(log => `<tr>
     <td>${log.date}</td>
     <td>${log.heure}</td>
     <td><strong>${log.action}</strong></td>
-    <td style="color:#6B7280;">${log.detail}</td>
+    <td style="color:#6B7280;">${log.detail || '-'}</td>
   </tr>`).join('');
 }
 
+  
 /**
  * FONCTION : clearLogs
  * DESCRIPTION : Efface tout le journal après confirmation
+ *               Supprime toutes les entrées de la table logs dans Supabase
  * PARAMÈTRES : aucun
  * RETOURNE : rien
- * MODIFIE : supprime 'admin_logs' du localStorage, vide #logs-table
+ * MODIFIE : vide la table logs dans Supabase
  */
-function clearLogs() {
+async function clearLogs() {
   if (!confirm('Effacer tout le journal ?')) return;
-  localStorage.removeItem('admin_logs');
-  loadLogs();
-  showAlert('✅ Journal effacé', 'success', 0);
+  
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/logs?id=not.is.null`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    }
+  });
+
+  if (res.ok) {
+    await addLog('🗑️ Journal effacé', 'Effacement complet du journal des actions');
+    showAlert('✅ Journal effacé', 'success', 0);
+    loadLogs();
+  } else {
+    showAlert('❌ Erreur lors de l\'effacement', 'error', 0);
+  }
 }
   
 
