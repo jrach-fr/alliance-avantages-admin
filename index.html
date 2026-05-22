@@ -162,7 +162,10 @@
   <div class="login-box">
     <h1>🔐 Alliance Avantages</h1>
     <p>Interface d'administration</p>
-    <input type="password" id="login-password" placeholder="Mot de passe" onkeypress="if(event.key==='Enter') login()">
+    <div style="position:relative;">
+      <input type="password" id="login-password" placeholder="Mot de passe" onkeypress="if(event.key==='Enter') login()" style="width:100%;padding-right:40px;">
+      <span onclick="togglePassword()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;" id="eye-icon">👁️</span>
+    </div>
     <button onclick="login()">Se connecter</button>
     <p class="login-error" id="login-error">Mot de passe incorrect</p>
   </div>
@@ -401,7 +404,7 @@
         <tr>
           <th>Icône</th>
           <th>Nom</th>
-          <th>Valeur</th>
+          <th>Offres</th>
           <th>Position</th>
           <th>Statut</th>
           <th>Actions</th>
@@ -451,6 +454,7 @@
           <tr>
             <th>Icône</th>
             <th>Nom</th>
+            <th>Offres</th>
             <th>Position</th>
             <th>Statut</th>
             <th>Actions</th>
@@ -709,6 +713,25 @@
     loadSettings();
   } else {
     document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+  /**
+ * FONCTION : togglePassword
+ * DESCRIPTION : Affiche ou masque le mot de passe dans le champ de connexion
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : type du champ #login-password, icône de #eye-icon
+ */
+function togglePassword() {
+  const input = document.getElementById('login-password');
+  const icon = document.getElementById('eye-icon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    icon.textContent = '👁️';
   }
 }
   
@@ -1321,8 +1344,13 @@ async function loadCategories() {
   tbody.innerHTML = allCategories.map(cat => `<tr>
     <td style="font-size:24px;">${cat.icon}</td>
     <td><strong>${cat.label}</strong></td>
-    <td><code>${cat.value}</code></td>
-    <td>${cat.position}</td>
+    <td><strong>${cat.label}</strong></td>
+    <td>
+      <span style="background:#E8EDF8;color:#003189;padding:3px 10px;border-radius:12px;font-weight:700;font-size:13px;">
+      ${allOffers.filter(o => o.category_id === cat.id && !o.deleted_at).length}
+      </span>
+    </td>
+<td>${cat.position}</td>
     <td><span class="badge ${cat.active ? 'badge-green' : 'badge-red'}">${cat.active ? 'Active' : 'Inactive'}</span></td>
     <td style="display:flex;gap:6px;">
       <button class="btn-edit" onclick="viewSubcategories('${cat.id}', '${cat.label}', '${cat.icon}')">📂 Sous-catégories</button>
@@ -1459,6 +1487,11 @@ async function loadSubcategories(categoryId) {
   tbody.innerHTML = subs.map(sub => `<tr>
     <td style="font-size:20px;">${sub.icon ?? '🏷️'}</td>
     <td><strong>${sub.label}</strong></td>
+    <td>
+      <span style="background:#E8EDF8;color:#003189;padding:3px 10px;border-radius:12px;font-weight:700;font-size:13px;">
+        ${allOffers.filter(o => o.subcategory_id === sub.id && !o.deleted_at).length}
+      </span>
+    </td>
     <td>${sub.position}</td>
     <td><span class="badge ${sub.active ? 'badge-green' : 'badge-red'}">${sub.active ? 'Active' : 'Inactive'}</span></td>
     <td style="display:flex;gap:6px;">
