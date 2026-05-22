@@ -1344,7 +1344,6 @@ async function loadCategories() {
   tbody.innerHTML = allCategories.map(cat => `<tr>
     <td style="font-size:24px;">${cat.icon}</td>
     <td><strong>${cat.label}</strong></td>
-    <td><strong>${cat.label}</strong></td>
     <td>
       <span style="background:#E8EDF8;color:#003189;padding:3px 10px;border-radius:12px;font-weight:700;font-size:13px;">
       ${allOffers.filter(o => o.category_id === cat.id && !o.deleted_at).length}
