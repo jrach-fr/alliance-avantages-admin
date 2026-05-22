@@ -185,6 +185,7 @@
     <button onclick="showSection('categories')">📂 Catégories</button>
     <button onclick="showSection('trash')">🗑️ Poubelle</button>
     <button onclick="showSection('settings')">⚙️ Paramètres</button>
+    <button onclick="showSection('logs')">📋 Journal</button>
   </nav>
 
   <main>
@@ -592,6 +593,32 @@
 
 </div>
 </main>
+  <!-- JOURNAL -->
+<div id="section-logs" class="section">
+  <div class="section-header">
+    <h2>📋 Journal des actions</h2>
+    <button class="btn-danger" onclick="clearLogs()">🗑️ Effacer le journal</button>
+  </div>
+  <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+    Historique des 500 dernières actions effectuées dans l'interface admin.
+  </p>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Heure</th>
+          <th>Action</th>
+          <th>Détail</th>
+        </tr>
+      </thead>
+      <tbody id="logs-table">
+        <tr><td colspan="4" class="loading">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+  
 <!-- MODAL EDIT -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
@@ -678,6 +705,7 @@
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadAll();
+    addLog('🔐 Connexion', 'Connexion admin réussie');
     loadSettings();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -692,9 +720,10 @@
  * MODIFIE : affichage de #login-screen et #app, vide le champ mot de passe
  */
   function logout() {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('login-password').value = '';
+  addLog('🚪 Déconnexion', 'Déconnexion admin');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-password').value = '';
   }
 
   // ============================================================
@@ -819,6 +848,7 @@
     if (name === 'add-offer') loadCategoriesForForm();
     if (name === 'trash') loadTrash();
     if (name === 'settings') loadSettings();
+    if (name === 'logs') loadLogs();
   }
 
   // ============================================================
@@ -954,6 +984,7 @@
   const ok = await supabaseUpdate('offers', id, { deleted_at: new Date().toISOString() });
   if (ok) {
     showAlert(`🗑️ Offre "${title}" déplacée dans la poubelle.`, 'success', 0);
+    addLog('🗑️ Mise à la poubelle', `"${title}"`);
     loadOffers();
   } else {
     showAlert('❌ Erreur lors de la suppression', 'error', 0);
@@ -1042,7 +1073,8 @@
     const ok = await supabaseInsert('offers', data);
    if (ok) {
     showAlert(`✅ Offre "${title}" ajoutée avec succès !`, 'success', 0);
-    resetForm();
+     addLog('➕ Ajout offre', `"${title}" — ${partnerName}`);
+     resetForm();
     loadAll();
   } else {
     showAlert(`❌ Erreur lors de l\'ajout de l\'offre "${title}"`, 'error', 0);
@@ -1259,6 +1291,7 @@ function toggleCityInput(value) {
     const ok = await supabaseUpdate('offers', id, data);
     if (ok) {
       showAlert('Offre modifiée avec succès !', 'success');
+      addLog('✏️ Modification offre', `ID: ${id}`);
       closeModal();
       loadOffers();
     } else {
@@ -1327,6 +1360,7 @@ async function addCategory() {
   const ok = await supabaseInsert('categories', { label, value, icon, position, active: true });
   if (ok) {
     showAlert('Catégorie ajoutée !', 'success');
+    addLog('📂 Ajout catégorie', `"${label}"`);
     document.getElementById('new-cat-label').value = '';
     document.getElementById('new-cat-value').value = '';
     document.getElementById('new-cat-icon').value = '';
@@ -1348,7 +1382,10 @@ async function addCategory() {
 async function deleteCategory(id) {
   if (!confirm('Supprimer cette catégorie ? Les offres associées ne seront pas supprimées.')) return;
   const ok = await supabaseDelete('categories', id);
-  if (ok) { showAlert('Catégorie supprimée !', 'success'); loadCategories(); }
+  if (ok) { 
+    showAlert('Catégorie supprimée !', 'success'); loadCategories();
+    addLog('🗑️ Suppression catégorie', `ID: ${id}`);
+  }
   else showAlert('Erreur lors de la suppression', 'error');
 }
 
@@ -1463,6 +1500,7 @@ async function addSubcategory() {
 
   if (ok) {
     showAlert('Sous-catégorie ajoutée !', 'success');
+    addLog('📁 Ajout sous-catégorie', `"${label}"`);
     document.getElementById('new-subcat-label').value = '';
     document.getElementById('new-subcat-icon').value = '';
     document.getElementById('add-subcategory-form').style.display = 'none';
@@ -1590,6 +1628,7 @@ async function restoreOffer(id, title) {
   const ok = await supabaseUpdate('offers', id, { deleted_at: null });
   if (ok) {
     showAlert(`✅ Offre "${title}" restaurée !`, 'success', 0);
+    addLog('♻️ Restauration', `"${title}"`);
     loadTrash();
     loadAll();
   } else {
@@ -1611,6 +1650,7 @@ async function permanentDelete(id, title) {
   const ok = await supabaseDelete('offers', id);
   if (ok) {
     showAlert(`🗑️ Offre "${title}" supprimée définitivement.`, 'success', 0);
+    addLog('💀 Suppression définitive', `"${title}"`);
     loadTrash();
   } else {
     showAlert('❌ Erreur lors de la suppression', 'error', 0);
@@ -1665,6 +1705,7 @@ function changePassword() {
   document.getElementById('new-password').value = '';
   document.getElementById('confirm-password').value = '';
   showAlert('✅ Mot de passe changé avec succès !', 'success', 0);
+  addLog('🔑 Changement mot de passe', 'Mot de passe admin modifié');
 }
 
 /**
@@ -1835,6 +1876,74 @@ function loadSettings() {
   const savedPassword = localStorage.getItem('admin_password');
   if (savedPassword) window._ADMIN_PASSWORD = savedPassword;
 }
+
+  /**
+ * FONCTION : addLog
+ * DESCRIPTION : Enregistre une action dans le journal (localStorage)
+ *               Appelée automatiquement par toutes les fonctions qui modifient des données
+ *               Limite à 500 entrées — les plus anciennes sont supprimées automatiquement
+ * PARAMÈTRES :
+ *   - action (string) : type d'action ex: "Ajout offre", "Suppression catégorie"
+ *   - detail (string) : détail de l'action ex: nom de l'offre concernée
+ * RETOURNE : rien
+ * MODIFIE : localStorage clé 'admin_logs'
+ */
+function addLog(action, detail) {
+  const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+  const now = new Date();
+  const entry = {
+    date: now.toLocaleDateString('fr-FR'),
+    heure: now.toLocaleTimeString('fr-FR'),
+    action,
+    detail
+  };
+  // On ajoute en tête de liste et on limite à 500 entrées
+  logs.unshift(entry);
+  localStorage.setItem('admin_logs', JSON.stringify(logs.slice(0, 500)));
+}
+
+/**
+ * FONCTION : loadLogs
+ * DESCRIPTION : Charge et affiche le journal des actions depuis localStorage
+ *               Appelée quand on clique sur l'onglet Journal
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #logs-table
+ */
+function loadLogs() {
+  const logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+  const tbody = document.getElementById('logs-table');
+
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9CA3AF;padding:20px;">Aucune action enregistrée</td></tr>';
+    return;
+  }
+
+  // Pour chaque entrée du journal, on crée une ligne dans le tableau
+  tbody.innerHTML = logs.map(log => `<tr>
+    <td>${log.date}</td>
+    <td>${log.heure}</td>
+    <td><strong>${log.action}</strong></td>
+    <td style="color:#6B7280;">${log.detail}</td>
+  </tr>`).join('');
+}
+
+/**
+ * FONCTION : clearLogs
+ * DESCRIPTION : Efface tout le journal après confirmation
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : supprime 'admin_logs' du localStorage, vide #logs-table
+ */
+function clearLogs() {
+  if (!confirm('Effacer tout le journal ?')) return;
+  localStorage.removeItem('admin_logs');
+  loadLogs();
+  showAlert('✅ Journal effacé', 'success', 0);
+}
+  
+
+  
   // ============================================================
   // ALERT
   // ============================================================
