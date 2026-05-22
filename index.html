@@ -179,13 +179,13 @@
   </header>
 
   <nav>
-    <button class="active" onclick="('dashboard')">📊 Tableau de bord</button>
-    <button onclick="showSection('offers')">🏷️ Offres</button>
-    <button onclick="showSection('add-offer')">➕ Ajouter une offre</button>
-    <button onclick="showSection('categories')">📂 Catégories</button>
-    <button onclick="showSection('trash')">🗑️ Poubelle</button>
-    <button onclick="showSection('settings')">⚙️ Paramètres</button>
-    <button onclick="showSection('logs')">📋 Journal</button>
+    <button class="active" onclick="showSection('dashboard', this)">📊 Tableau de bord</button>
+    <button onclick="showSection('offers', this)">🏷️ Offres</button>
+    <button onclick="showSection('add-offer', this)">➕ Ajouter une offre</button>
+    <button onclick="showSection('categories', this)">📂 Catégories</button>
+    <button onclick="showSection('trash', this)">🗑️ Poubelle</button>
+    <button onclick="showSection('settings', this)">⚙️ Paramètres</button>
+    <button onclick="showSection('logs', this)">📋 Journal</button>
   </nav>
 
   <main>
@@ -829,26 +829,31 @@
   /**
  * FONCTION : showSection
  * DESCRIPTION : Affiche la section demandée et masque les autres
+ *               Recharge les données de la section si nécessaire
+ *               Masque le message d'alerte au changement de section
  * PARAMÈTRES :
- *   - name (string) : nom de la section (dashboard, offers, add-offer, categories)
+ *   - name (string) : nom de la section (dashboard, offers, add-offer, categories, trash, settings, logs)
+ *   - btn (HTMLElement) : le bouton cliqué, passé via this dans le HTML — permet de le marquer comme actif
  * RETOURNE : rien
- * MODIFIE : classes CSS des sections et boutons nav, charge les données si nécessaire
+ * MODIFIE : classes CSS des sections et boutons nav, masque #alert, charge les données si nécessaire
  */
-  function showSection(name) {
+  
+  function showSection(name, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
 
     // Masque le message alert quand on change de section
     document.getElementById('alert').style.display = 'none';
 
+    if (name === 'dashboard') loadDashboard();
     if (name === 'offers') loadOffers();
     if (name === 'categories') loadCategories();
     if (name === 'add-offer') loadCategoriesForForm();
     if (name === 'trash') loadTrash();
-    if (name === 'settings') loadSettings();
     if (name === 'logs') loadLogs();
+    if (name === 'settings') loadSettings();
   }
 
   // ============================================================
