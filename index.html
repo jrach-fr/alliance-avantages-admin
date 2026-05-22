@@ -1547,7 +1547,31 @@ async function saveEditCategory() {
     return;
   }
 
-  const ok = await supabaseUpdate('categories', id, { label, icon, position, active });
+  // Décale automatiquement les autres catégories pour faire de la place
+  const oldCat = allCategories.find(c => c.id === id);
+  const oldPosition = oldCat.position;
+  
+  if (position !== oldPosition) {
+    // Déplace vers le bas : les catégories entre oldPosition et position remontent
+    if (position > oldPosition) {
+      for (const cat of allCategories) {
+        if (cat.id !== id && cat.position > oldPosition && cat.position <= position) {
+          await supabaseUpdate('categories', cat.id, { position: cat.position - 1 });
+        }
+      }
+    }
+    // Déplace vers le haut : les catégories entre position et oldPosition descendent
+    else {
+      for (const cat of allCategories) {
+        if (cat.id !== id && cat.position >= position && cat.position < oldPosition) {
+          await supabaseUpdate('categories', cat.id, { position: cat.position + 1 });
+        }
+      }
+    }
+  }
+
+const ok = await supabaseUpdate('categories', id, { label, icon, position, active });
+  
   if (ok) {
     showAlert(`✅ Catégorie "${label}" modifiée !`, 'success', 0);
     addLog('✏️ Modification catégorie', `"${label}" — position: ${position}`);
@@ -1716,7 +1740,28 @@ async function saveEditSubcategory() {
     return;
   }
 
-  const ok = await supabaseUpdate('subcategories', id, { label, icon: icon || '🏷️', position, active });
+  const oldSub = allSubcategories.find(s => s.id === id);
+  const oldPosition = oldSub.position;
+  const siblingSubcats = allSubcategories.filter(s => s.category_id === oldSub.category_id);
+
+  if (position !== oldPosition) {
+    if (position > oldPosition) {
+      for (const sub of siblingSubcats) {
+        if (sub.id !== id && sub.position > oldPosition && sub.position <= position) {
+          await supabaseUpdate('subcategories', sub.id, { position: sub.position - 1 });
+        }
+      }
+    } else {
+      for (const sub of siblingSubcats) {
+        if (sub.id !== id && sub.position >= position && sub.position < oldPosition) {
+          await supabaseUpdate('subcategories', sub.id, { position: sub.position + 1 });
+        }
+      }
+    }
+  }
+
+const ok = await supabaseUpdate('subcategories', id, { label, icon: icon || '🏷️', position, active });
+  
   if (ok) {
     showAlert(`✅ Sous-catégorie "${label}" modifiée !`, 'success', 0);
     addLog('✏️ Modification sous-catégorie', `"${label}" — position: ${position}`);
