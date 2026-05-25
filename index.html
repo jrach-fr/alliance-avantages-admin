@@ -621,8 +621,7 @@
   <div class="form-actions">
     <button class="btn-orange" onclick="previewBanner()">👁️ Aperçu</button>
     <button class="btn-primary" onclick="saveBanner()">💾 Publier</button>
-    <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🗑️ Désactiver</button>
-  </div>
+    <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 Réinitialiser</button>  </div>
 </div>
 
   <!-- Sauvegarde -->
@@ -2228,10 +2227,11 @@ async function saveBanner() {
 
 /**
  * FONCTION : clearBanner
- * DESCRIPTION : Désactive et supprime la bannière
+ * DESCRIPTION : Réinitialise tous les champs de la bannière sans la supprimer de l'app
+ *               Différent de "Bannière active" qui permet de préparer sans afficher
  * PARAMÈTRES : aucun
  * RETOURNE : rien
- * MODIFIE : supprime 'event_banner' du localStorage, vide les champs
+ * MODIFIE : vide tous les champs #banner-*, supprime 'event_banner' du localStorage
  */
 function clearBanner() {
   localStorage.removeItem('event_banner');
