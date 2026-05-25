@@ -1078,17 +1078,22 @@ function togglePassword() {
         </td>
       </tr>`;
     }).join('');
-    // Remplit le select des catégories pour le filtre
-    const catSelect = document.getElementById('filter-category');
+   // Remplit le select des catégories pour le filtre (seulement si l'élément existe)
+  const catSelect = document.getElementById('filter-category');
+  if (catSelect) {
     const currentVal = catSelect.value;
     catSelect.innerHTML = '<option value="">Toutes les catégories</option>';
     allCategories.forEach(cat => {
       catSelect.innerHTML += `<option value="${cat.id}" ${currentVal === cat.id ? 'selected' : ''}>${cat.icon} ${cat.label}</option>`;
     });
-
-    // Affiche le compteur total
-    document.getElementById('search-count').textContent = `${allOffers.filter(o => !o.deleted_at).length} offres au total`;
   }
+  // Affiche le compteur total (seulement si l'élément existe)
+  const searchCount = document.getElementById('search-count');
+  if (searchCount) {
+    searchCount.textContent = `${allOffers.filter(o => !o.deleted_at).length} offres au total`;
+  }
+}
+  
  /**
  * FONCTION : filterOffers
  * DESCRIPTION : Filtre la liste des offres en temps réel selon la recherche et les filtres
