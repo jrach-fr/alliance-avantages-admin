@@ -867,6 +867,53 @@
 </div>
   
 <!-- MODAL EDIT -->
+
+<!-- MODAL EDIT BANNIERE -->
+<div class="modal-overlay" id="edit-banner-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Modifier la bannière</h3>
+      <button class="modal-close" onclick="closeEditBanner()">×</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="edit-banner-id">
+      <div class="form-group full">
+        <label>Nom *</label>
+        <input type="text" id="edit-banner-name" placeholder="Ex: Noël 2026">
+      </div>
+      <div class="form-group full">
+        <label>Message (optionnel)</label>
+        <input type="text" id="edit-banner-message" placeholder="Ex: Joyeux Noël !">
+      </div>
+      <div class="form-group full">
+        <label>Image URL</label>
+        <input type="url" id="edit-banner-image-url" placeholder="https://...">
+        <small style="color:#9CA3AF;">Laissez vide pour conserver l'image actuelle</small>
+      </div>
+      <div class="form-group full">
+        <label>Offre mise en avant</label>
+        <select id="edit-banner-offer-id">
+          <option value="">Aucune</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Offre vedette</label>
+        <select id="edit-banner-featured-offer">
+          <option value="">Aucune offre vedette</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Titre offre vedette</label>
+        <input type="text" id="edit-banner-featured-title" placeholder="Ex: ⭐ Offre de la semaine !">
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px;">
+      <button class="btn-primary" onclick="saveEditBanner()">💾 Sauvegarder</button>
+      <button class="btn-danger" onclick="closeEditBanner()">Annuler</button>
+    </div>
+  </div>
+</div>
+
   
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
@@ -2928,7 +2975,99 @@ function simNavigate(screen) {
     </div>
   `;
 }
+
+  // ============================================================
+  // EDITION DES BANNIERES
+  // ============================================================
+  /**
+
   
+  /**
+ * FONCTION : openEditBanner
+ * DESCRIPTION : Ouvre la modal de modification d'une bannière et pré-remplit les champs
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la bannière à modifier
+ * RETOURNE : rien
+ * MODIFIE : valeurs des champs #edit-banner-*, affichage de #edit-banner-modal
+ */
+async function openEditBanner(id) {
+  const banners = await supabaseQuery('banners', { select: '*' });
+  const banner = banners.find(b => b.id === id);
+  if (!banner) return;
+
+  document.getElementById('edit-banner-id').value = banner.id;
+  document.getElementById('edit-banner-name').value = banner.name || '';
+  document.getElementById('edit-banner-message').value = banner.message || '';
+  document.getElementById('edit-banner-image-url').value = banner.image_url || '';
+  document.getElementById('edit-banner-featured-title').value = banner.featured_title || '';
+
+  // Remplit les selects offres
+  const offerSelect = document.getElementById('edit-banner-offer-id');
+  const featuredSelect = document.getElementById('edit-banner-featured-offer');
+
+  offerSelect.innerHTML = '<option value="">Aucune</option>';
+  featuredSelect.innerHTML = '<option value="">Aucune offre vedette</option>';
+
+  allOffers.filter(o => o.active && !o.deleted_at).forEach(o => {
+    const label = `${o.discount ? o.discount + ' — ' : ''}${o.title}`;
+    offerSelect.innerHTML += `<option value="${o.id}" ${banner.offer_id === o.id ? 'selected' : ''}>${label}</option>`;
+    featuredSelect.innerHTML += `<option value="${o.id}" ${banner.featured_offer_id === o.id ? 'selected' : ''}>${label}</option>`;
+  });
+
+  document.getElementById('edit-banner-modal').classList.add('open');
+}
+
+/**
+ * FONCTION : closeEditBanner
+ * DESCRIPTION : Ferme la modal de modification de bannière
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : classe CSS de #edit-banner-modal
+ */
+function closeEditBanner() {
+  document.getElementById('edit-banner-modal').classList.remove('open');
+}
+
+/**
+ * FONCTION : saveEditBanner
+ * DESCRIPTION : Sauvegarde les modifications d'une bannière dans Supabase
+ * PARAMÈTRES : aucun (lit les champs #edit-banner-*)
+ * RETOURNE : rien
+ * MODIFIE : la bannière dans Supabase, ferme la modal, recharge la liste
+ */
+async function saveEditBanner() {
+  const id = document.getElementById('edit-banner-id').value;
+  const name = document.getElementById('edit-banner-name').value.trim();
+  const message = document.getElementById('edit-banner-message').value.trim();
+  const imageUrl = document.getElementById('edit-banner-image-url').value.trim();
+  const offerId = document.getElementById('edit-banner-offer-id').value;
+  const featuredOfferId = document.getElementById('edit-banner-featured-offer').value;
+  const featuredTitle = document.getElementById('edit-banner-featured-title').value.trim();
+
+  if (!name) {
+    showAlert('❌ Le nom est obligatoire', 'error', 0);
+    return;
+  }
+
+  const ok = await supabaseUpdate('banners', id, {
+    name,
+    message: message || null,
+    image_url: imageUrl || null,
+    offer_id: offerId || null,
+    featured_offer_id: featuredOfferId || null,
+    featured_title: featuredTitle || null,
+  });
+
+  if (ok) {
+    showAlert(`✅ Bannière "${name}" modifiée !`, 'success', 0);
+    addLog('✏️ Modification bannière', `"${name}"`);
+    closeEditBanner();
+    loadBanners();
+  } else {
+    showAlert('❌ Erreur lors de la modification', 'error', 0);
+  }
+}
+
   // ============================================================
   // ALERT
   // ============================================================
