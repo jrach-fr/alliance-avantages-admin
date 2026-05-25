@@ -2321,10 +2321,16 @@ async function saveBanner() {
   const message = document.getElementById('banner-message').value.trim();
   const offerId = document.getElementById('banner-offer-id').value;
 
- if (!name) {
-    showAlert('❌ Donnez un nom à la bannière', 'error', 0);
-    return;
+   // Le nom est optionnel si une offre vedette est sélectionnée
+  const finalName = name || (featuredOfferId ? 
+      allOffers.find(o => o.id === featuredOfferId)?.title || 'Offre vedette' 
+      : null);
+
+  if (!finalName) {
+      showAlert('❌ Donnez un nom à la bannière ou sélectionnez une offre vedette', 'error', 0);
+      return;
   }
+  
   const featuredOfferId = document.getElementById('banner-featured-offer').value;
   const featuredTitle = document.getElementById('banner-featured-title').value.trim();
   if (!imageUrl && !featuredOfferId) {
@@ -2332,7 +2338,7 @@ async function saveBanner() {
     return;
   }
   const ok = await supabaseInsert('banners', {
-    name,
+    name:finalName,
     image_url: imageUrl || null,
     message: message || null,
     offer_id: offerId || null,
@@ -2343,7 +2349,7 @@ async function saveBanner() {
   
   if (ok) {
     showAlert(`✅ Bannière "${name}" sauvegardée !`, 'success', 0);
-    addLog('🎄 Bannière sauvegardée', `"${name}"`);
+    addLog('🎄 Bannière sauvegardée', `"${finalName}"`);
     resetBannerForm();
     loadBanners();
   } else {
