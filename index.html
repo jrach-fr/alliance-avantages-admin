@@ -2321,19 +2321,16 @@ async function saveBanner() {
   const message = document.getElementById('banner-message').value.trim();
   const offerId = document.getElementById('banner-offer-id').value;
 
-  if (!name) {
+ if (!name) {
     showAlert('❌ Donnez un nom à la bannière', 'error', 0);
     return;
   }
   const featuredOfferId = document.getElementById('banner-featured-offer').value;
+  const featuredTitle = document.getElementById('banner-featured-title').value.trim();
   if (!imageUrl && !featuredOfferId) {
     showAlert('❌ Ajoutez une image ou sélectionnez une offre vedette', 'error', 0);
     return;
   }
-
-  const featuredOfferId = document.getElementById('banner-featured-offer').value;
-  const featuredTitle = document.getElementById('banner-featured-title').value.trim();
-  
   const ok = await supabaseInsert('banners', {
     name,
     image_url: imageUrl || null,
