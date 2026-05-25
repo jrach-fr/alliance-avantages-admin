@@ -609,6 +609,21 @@
         </select>
         <small style="color:#9CA3AF;">En cliquant sur la bannière, l'utilisateur sera redirigé vers cette offre.</small>
       </div>
+      <div class="form-group full" style="border-top:2px dashed #FF6B00;padding-top:16px;margin-top:8px;">
+  <label style="color:#FF6B00;font-size:13px;font-weight:700;">⭐ OFFRE VEDETTE (optionnel)</label>
+  <p style="font-size:12px;color:#6B7280;margin-bottom:10px;">
+    Met une offre en avant avec un affichage spécial dans l'app. 
+    Remplace la bannière image si sélectionnée.
+  </p>
+  <select id="banner-featured-offer">
+    <option value="">Aucune offre vedette</option>
+  </select>
+  <div style="margin-top:8px;">
+    <label style="font-size:12px;font-weight:600;color:#374151;">Titre personnalisé (optionnel)</label>
+    <input type="text" id="banner-featured-title" placeholder="Ex: ⭐ Offre de la semaine ! 🔥 À ne pas manquer !" style="margin-top:4px;">
+    <small style="color:#9CA3AF;">Laissez vide pour utiliser le titre de l'offre.</small>
+  </div>
+</div>
     </div>
     <div class="form-actions">
       <button class="btn-primary" onclick="saveBanner()">💾 Sauvegarder la bannière</button>
@@ -2310,19 +2325,25 @@ async function saveBanner() {
     showAlert('❌ Donnez un nom à la bannière', 'error', 0);
     return;
   }
-  if (!imageUrl) {
-    showAlert('❌ Ajoutez une image à la bannière', 'error', 0);
+  const featuredOfferId = document.getElementById('banner-featured-offer').value;
+  if (!imageUrl && !featuredOfferId) {
+    showAlert('❌ Ajoutez une image ou sélectionnez une offre vedette', 'error', 0);
     return;
   }
 
+  const featuredOfferId = document.getElementById('banner-featured-offer').value;
+  const featuredTitle = document.getElementById('banner-featured-title').value.trim();
+  
   const ok = await supabaseInsert('banners', {
     name,
-    image_url: imageUrl,
+    image_url: imageUrl || null,
     message: message || null,
     offer_id: offerId || null,
+    featured_offer_id: featuredOfferId || null,
+    featured_title: featuredTitle || null,
     active: false
   });
-
+  
   if (ok) {
     showAlert(`✅ Bannière "${name}" sauvegardée !`, 'success', 0);
     addLog('🎄 Bannière sauvegardée', `"${name}"`);
@@ -2544,6 +2565,15 @@ function loadSettings() {
     allOffers.filter(o => o.active && !o.deleted_at).forEach(o => {
       bannerSelect.innerHTML += `<option value="${o.id}">${o.title}</option>`;
     });
+
+    // Remplit aussi le select de l'offre vedette
+  const featuredSelect = document.getElementById('banner-featured-offer');
+  if (featuredSelect) {
+    featuredSelect.innerHTML = '<option value="">Aucune offre vedette</option>';
+    allOffers.filter(o => o.active && !o.deleted_at).forEach(o => {
+      featuredSelect.innerHTML += `<option value="${o.id}">${o.discount ? o.discount + ' — ' : ''}${o.title}</option>`;
+    });
+}
   }
 
   // Charge la liste des bannières
