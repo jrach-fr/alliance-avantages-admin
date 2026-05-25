@@ -1662,7 +1662,7 @@ function toggleCityInput(value) {
     const ok = await supabaseUpdate('offers', id, data);
     if (ok) {
       showAlert('Offre modifiée avec succès !', 'success');
-      addLog('✏️ Modification offre', `ID: ${id}`);
+      addLog('✏️ Modification offre', `"${document.getElementById('edit-title').value}"`);
       closeModal();
       loadOffers();
     } else {
@@ -2383,7 +2383,7 @@ async function loadBanners() {
       </div>
       <div style="display:flex;gap:8px;padding:8px 12px;background:#F4F6FB;border-top:1px solid #E5E7EB;">
         ${b.active 
-          ? `<button class="btn-edit" onclick="deactivateBanner('${b.id}')">⏸️ Désactiver</button>`
+          ? `<button class="btn-edit" onclick="deactivateBanner('${b.id}', '${b.name}')">⏸️ Désactiver</button>`
           : `<button class="btn-primary" onclick="activateBanner('${b.id}', '${b.name}')">▶️ Activer</button>`
         }
         <button class="btn-danger" onclick="deleteBanner('${b.id}', '${b.name}', '${b.image_url}')">🗑️ Supprimer</button>
@@ -2422,16 +2422,19 @@ async function activateBanner(id, name) {
 /**
  * FONCTION : deactivateBanner
  * DESCRIPTION : Désactive une bannière sans la supprimer
+ *               La bannière reste sauvegardée et peut être réactivée à tout moment
  * PARAMÈTRES :
  *   - id (string) : UUID de la bannière à désactiver
+ *   - name (string) : nom de la bannière pour le journal des actions
  * RETOURNE : rien
- * MODIFIE : champ active = false dans Supabase, recharge la liste
+ * MODIFIE : champ active = false dans Supabase, recharge la liste, ajoute un log
  */
-async function deactivateBanner(id) {
+  
+async function deactivateBanner(id, name) {
   const ok = await supabaseUpdate('banners', id, { active: false });
   if (ok) {
     showAlert('✅ Bannière désactivée', 'success', 0);
-    addLog('⏸️ Bannière désactivée', `ID: ${id}`);
+    addLog('⏸️ Bannière désactivée', `"${name}"`);
     loadBanners();
   } else {
     showAlert('❌ Erreur lors de la désactivation', 'error', 0);
