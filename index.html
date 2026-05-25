@@ -2719,7 +2719,7 @@ function simShowHome(newOffers, activeBanner) {
         ${newOffers.map(o => `
           <div onclick="simShowOffer('${o.id}')" style="background:#003189;border-radius:10px;padding:10px;min-width:130px;cursor:pointer;flex-shrink:0;">
             ${o.flash ? '<span style="background:#FF6B00;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:800;">FLASH</span><br>' : ''}
-            <div style="color:#FF6B00;font-size:16px;font-weight:800;margin:4px 0;">${o.discount}</div>
+            <div style="color:#FF6B00;font-size:16px;font-weight:800;margin:4px 0;">${o.discount || ''}</div>
             <div style="color:white;font-size:10px;font-weight:600;line-height:14px;">${o.title.substring(0, 40)}${o.title.length > 40 ? '...' : ''}</div>
             <div style="color:#93C5FD;font-size:9px;margin-top:4px;">${o.partner_name}</div>
           </div>
@@ -2780,7 +2780,7 @@ function simSelectCategory(categoryId) {
     <div onclick="simShowOffer('${o.id}')" style="background:white;margin:6px 8px;border-radius:10px;padding:10px;border-left:3px solid ${o.flash ? '#FF6B00' : '#003189'};cursor:pointer;box-shadow:0 1px 4px rgba(0,49,137,0.08);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         ${o.flash ? '<span style="background:#FF6B00;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:800;">FLASH</span>' : '<span></span>'}
-        <span style="background:#FF6B00;color:white;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;">${o.discount}</span>
+        <span style="background:#FF6B00;color:white;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;">${o.discount || ''}</span>
       </div>
       <div style="font-size:11px;font-weight:700;color:#001F5E;margin-bottom:2px;">${o.title.substring(0,50)}${o.title.length>50?'...':''}</div>
       <div style="font-size:10px;color:#9CA3AF;">📍 ${o.city} · ${o.partner_name}</div>
