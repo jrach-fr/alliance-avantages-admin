@@ -2320,6 +2320,8 @@ async function saveBanner() {
   const imageUrl = document.getElementById('banner-image-url').value.trim();
   const message = document.getElementById('banner-message').value.trim();
   const offerId = document.getElementById('banner-offer-id').value;
+  const featuredOfferId = document.getElementById('banner-featured-offer').value;
+  const featuredTitle = document.getElementById('banner-featured-title').value.trim();
 
    // Le nom est optionnel si une offre vedette est sélectionnée
   const finalName = name || (featuredOfferId ? 
@@ -2331,8 +2333,7 @@ async function saveBanner() {
       return;
   }
   
-  const featuredOfferId = document.getElementById('banner-featured-offer').value;
-  const featuredTitle = document.getElementById('banner-featured-title').value.trim();
+  
   if (!imageUrl && !featuredOfferId) {
     showAlert('❌ Ajoutez une image ou sélectionnez une offre vedette', 'error', 0);
     return;
@@ -2353,7 +2354,7 @@ async function saveBanner() {
   console.log('ok:', ok);
   
   if (ok) {
-    showAlert(`✅ Bannière "${name}" sauvegardée !`, 'success', 0);
+    showAlert(`✅ Bannière "${finalName}" sauvegardée !`, 'success', 0);
     addLog('🎄 Bannière sauvegardée', `"${finalName}"`);
     resetBannerForm();
     loadBanners();
