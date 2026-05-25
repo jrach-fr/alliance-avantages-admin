@@ -189,6 +189,7 @@
     <button onclick="showSection('trash', this)">🗑️ Poubelle</button>
     <button onclick="showSection('settings', this)">⚙️ Paramètres</button>
     <button onclick="showSection('logs', this)">📋 Journal</button>
+    <button onclick="showSection('simulator', this)">📱 Simulateur</button>
   </nav>
 
   <main>
@@ -734,7 +735,124 @@
     </div>
   </div>
 </div>
+
+<!-- SIMULATEUR MOBILE -->
+<div id="section-simulator" class="section">
+  <div class="section-header">
+    <h2>📱 Simulateur mobile</h2>
+    <button class="btn-primary" onclick="refreshSimulator()">🔄 Actualiser</button>
+  </div>
+  <p style="font-size:13px;color:#6B7280;margin-bottom:20px;">
+    Aperçu de l'application telle qu'elle apparaît sur un téléphone Android.
+    Les données sont chargées en temps réel depuis Supabase.
+  </p>
+
+  <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- Cadre téléphone -->
+    <div style="flex-shrink:0;">
+      <div style="
+        width:375px;
+        height:720px;
+        background:#111;
+        border-radius:40px;
+        padding:12px;
+        box-shadow:0 20px 60px rgba(0,0,0,0.4), inset 0 0 0 2px #333;
+        position:relative;
+      ">
+        <!-- Encoche -->
+        <div style="
+          width:120px;height:28px;
+          background:#111;
+          border-radius:0 0 18px 18px;
+          position:absolute;
+          top:12px;left:50%;
+          transform:translateX(-50%);
+          z-index:10;
+        "></div>
+
+        <!-- Écran -->
+        <div style="
+          width:100%;height:100%;
+          background:#F4F6FB;
+          border-radius:30px;
+          overflow:hidden;
+          display:flex;
+          flex-direction:column;
+        ">
+          <!-- Barre de statut -->
+          <div style="background:#FFFFFF;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:600;">15:00</span>
+            <span style="font-size:11px;">📶 🔋</span>
+          </div>
+
+          <!-- Header logo -->
+          <div style="background:#FFFFFF;padding:8px 12px;border-bottom:1px solid #E5E7EB;flex-shrink:0;">
+            <img src="https://nbgnijldoxpxzulovqlz.supabase.co/storage/v1/object/public/offers-images/logo.jpg" 
+                 style="height:32px;object-fit:contain;"
+                 onerror="this.style.display='none'">
+          </div>
+
+          <!-- Catégories -->
+          <div style="background:#003189;padding:6px 8px;overflow-x:auto;white-space:nowrap;flex-shrink:0;" id="sim-categories">
+            <span style="display:inline-block;background:#FF6B00;color:white;padding:4px 10px;border-radius:8px;font-size:10px;margin-right:6px;cursor:pointer;">🏠 Accueil</span>
+          </div>
+
+          <!-- Contenu scrollable -->
+          <div style="flex:1;overflow-y:auto;overflow-x:hidden;" id="sim-content">
+            <div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;">
+              Chargement...
+            </div>
+          </div>
+
+          <!-- Barre de navigation -->
+          <div style="background:#003189;padding:8px 0;display:flex;justify-content:space-around;flex-shrink:0;">
+            <div onclick="simNavigate('home')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" id="sim-nav-home">
+              <span style="font-size:16px;">🏠</span>
+              <span style="font-size:8px;color:#FF6B00;font-weight:600;">Accueil</span>
+            </div>
+            <div onclick="simNavigate('search')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" id="sim-nav-search">
+              <span style="font-size:16px;">🔍</span>
+              <span style="font-size:8px;color:rgba(255,255,255,0.6);">Recherche</span>
+            </div>
+            <div onclick="simNavigate('favorites')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" id="sim-nav-favorites">
+              <span style="font-size:16px;">❤️</span>
+              <span style="font-size:8px;color:rgba(255,255,255,0.6);">Favoris</span>
+            </div>
+            <div onclick="simNavigate('history')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" id="sim-nav-history">
+              <span style="font-size:16px;">🕐</span>
+              <span style="font-size:8px;color:rgba(255,255,255,0.6);">Historique</span>
+            </div>
+            <div onclick="simNavigate('profile')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;" id="sim-nav-profile">
+              <span style="font-size:16px;">👤</span>
+              <span style="font-size:8px;color:rgba(255,255,255,0.6);">Profil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Infos à droite -->
+    <div style="flex:1;min-width:200px;">
+      <div class="form-card">
+        <h3>📊 État actuel</h3>
+        <div id="sim-info" style="font-size:13px;color:#6B7280;line-height:24px;">
+          Chargement...
+        </div>
+      </div>
+      <div class="form-card" style="margin-top:16px;">
+        <h3>🎄 Bannière active</h3>
+        <div id="sim-banner-info" style="font-size:13px;color:#6B7280;">
+          Aucune bannière active
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+  
 <!-- MODAL EDIT -->
+  
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-header">
@@ -988,6 +1106,7 @@ function togglePassword() {
     if (name === 'trash') loadTrash();
     if (name === 'logs') loadLogs();
     if (name === 'settings') loadSettings();
+    if (name === 'simulator') loadSimulator();
   }
 
   // ============================================================
@@ -2510,7 +2629,234 @@ async function clearLogs() {
   }
 }
   
+  // ============================================================
+  // SIMULATEUR TELEPHONE
+  // ============================================================
 
+  /**
+ * FONCTION : refreshSimulator
+ * DESCRIPTION : Actualise toutes les données du simulateur depuis Supabase
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-categories, #sim-content, #sim-info, #sim-banner-info
+ */
+async function refreshSimulator() {
+  await loadSimulator();
+}
+
+/**
+ * FONCTION : loadSimulator
+ * DESCRIPTION : Charge et affiche toutes les données dans le simulateur mobile
+ *               Affiche les catégories, offres du moment et bannière active
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-categories, #sim-content, #sim-info, #sim-banner-info
+ */
+async function loadSimulator() {
+  // Charge les données
+  const [cats, offs, banners] = await Promise.all([
+    supabaseQuery('categories', { select: '*', order: 'position' }),
+    supabaseQuery('offers', { select: '*', order: 'flash.desc' }),
+    supabaseQuery('banners', { select: '*' }),
+  ]);
+
+  const activeBanner = banners.find(b => b.active);
+  const newOffers = offs.filter(o => o.is_new && o.active && !o.deleted_at);
+  const activeOffers = offs.filter(o => o.active && !o.deleted_at);
+
+  // Catégories
+  const simCats = document.getElementById('sim-categories');
+  simCats.innerHTML = `
+    <span onclick="simSelectCategory(null)" style="display:inline-block;background:#FF6B00;color:white;padding:4px 10px;border-radius:8px;font-size:10px;margin-right:6px;cursor:pointer;">🏠 Accueil</span>
+    ${cats.filter(c => c.active).map(cat => `
+      <span onclick="simSelectCategory('${cat.id}')" data-cat-id="${cat.id}" style="display:inline-block;background:#001F5E;color:white;padding:4px 10px;border-radius:8px;font-size:10px;margin-right:6px;cursor:pointer;">${cat.icon} ${cat.label}</span>
+    `).join('')}
+  `;
+
+  // Infos panneau droit
+  document.getElementById('sim-info').innerHTML = `
+    <div>📦 <strong>${activeOffers.length}</strong> offres actives</div>
+    <div>⚡ <strong>${activeOffers.filter(o => o.flash).length}</strong> offres flash</div>
+    <div>✨ <strong>${newOffers.length}</strong> offres du moment</div>
+    <div>📂 <strong>${cats.filter(c => c.active).length}</strong> catégories</div>
+  `;
+
+  // Bannière info
+  if (activeBanner) {
+    document.getElementById('sim-banner-info').innerHTML = `
+      <div style="margin-bottom:8px;"><strong style="color:#10B981;">✅ ${activeBanner.name}</strong></div>
+      <img src="${activeBanner.image_url}" style="width:100%;border-radius:8px;margin-bottom:6px;" onerror="this.style.display='none'">
+      ${activeBanner.message ? `<div style="font-size:12px;">${activeBanner.message}</div>` : ''}
+    `;
+  } else {
+    document.getElementById('sim-banner-info').innerHTML = '<span style="color:#9CA3AF;">Aucune bannière active</span>';
+  }
+
+  // Affiche l'écran accueil par défaut
+  simShowHome(newOffers, activeBanner);
+
+  // Stocke les données pour navigation
+  window._simData = { cats, offs: activeOffers, activeBanner, newOffers };
+}
+
+/**
+ * FONCTION : simShowHome
+ * DESCRIPTION : Affiche l'écran d'accueil dans le simulateur
+ *               Offres du moment + bannière événement ou placeholder
+ * PARAMÈTRES :
+ *   - newOffers (array) : offres marquées is_new
+ *   - activeBanner (object|null) : bannière active ou null
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-content
+ */
+function simShowHome(newOffers, activeBanner) {
+  const content = document.getElementById('sim-content');
+
+  const offersHtml = newOffers.length > 0 ? `
+    <div style="padding:10px 10px 4px;">
+      <div style="font-size:12px;font-weight:700;color:#001F5E;margin-bottom:8px;">✨ Offres du moment</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;">
+        ${newOffers.map(o => `
+          <div onclick="simShowOffer('${o.id}')" style="background:#003189;border-radius:10px;padding:10px;min-width:130px;cursor:pointer;flex-shrink:0;">
+            ${o.flash ? '<span style="background:#FF6B00;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:800;">FLASH</span><br>' : ''}
+            <div style="color:#FF6B00;font-size:16px;font-weight:800;margin:4px 0;">${o.discount}</div>
+            <div style="color:white;font-size:10px;font-weight:600;line-height:14px;">${o.title.substring(0, 40)}${o.title.length > 40 ? '...' : ''}</div>
+            <div style="color:#93C5FD;font-size:9px;margin-top:4px;">${o.partner_name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const bannerHtml = activeBanner ? `
+    <div style="margin:8px 10px;border-radius:10px;overflow:hidden;cursor:pointer;" onclick="simShowOffer('${activeBanner.offer_id || ''}')">
+      <img src="${activeBanner.image_url}" style="width:100%;display:block;" onerror="this.style.display='none'">
+      ${activeBanner.message ? `<div style="background:#003189;color:white;padding:6px 10px;font-size:10px;font-weight:600;">${activeBanner.message}</div>` : ''}
+    </div>
+  ` : `
+    <div style="margin:8px 10px;border-radius:10px;background:#FFFFFF;height:120px;display:flex;justify-content:center;align-items:center;border:1px solid #E5E7EB;">
+      <span style="color:#E5E7EB;font-size:30px;">🖼️</span>
+    </div>
+  `;
+
+  content.innerHTML = offersHtml + bannerHtml;
+}
+
+/**
+ * FONCTION : simSelectCategory
+ * DESCRIPTION : Affiche les offres d'une catégorie dans le simulateur
+ * PARAMÈTRES :
+ *   - categoryId (string|null) : UUID de la catégorie ou null pour revenir à l'accueil
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-content, style des boutons catégories
+ */
+function simSelectCategory(categoryId) {
+  if (!window._simData) return;
+  const { cats, offs, activeBanner, newOffers } = window._simData;
+
+  // Met à jour le style des catégories
+  document.querySelectorAll('#sim-categories span').forEach(span => {
+    span.style.background = '#001F5E';
+  });
+
+  if (!categoryId) {
+    document.querySelector('#sim-categories span').style.background = '#FF6B00';
+    simShowHome(newOffers, activeBanner);
+    return;
+  }
+
+  const catSpan = document.querySelector(`[data-cat-id="${categoryId}"]`);
+  if (catSpan) catSpan.style.background = '#FF6B00';
+
+  const filtered = offs.filter(o => o.category_id === categoryId);
+  const content = document.getElementById('sim-content');
+
+  if (!filtered.length) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:12px;">Aucune offre dans cette catégorie</div>';
+    return;
+  }
+
+  content.innerHTML = filtered.map(o => `
+    <div onclick="simShowOffer('${o.id}')" style="background:white;margin:6px 8px;border-radius:10px;padding:10px;border-left:3px solid ${o.flash ? '#FF6B00' : '#003189'};cursor:pointer;box-shadow:0 1px 4px rgba(0,49,137,0.08);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        ${o.flash ? '<span style="background:#FF6B00;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:800;">FLASH</span>' : '<span></span>'}
+        <span style="background:#FF6B00;color:white;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;">${o.discount}</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#001F5E;margin-bottom:2px;">${o.title.substring(0,50)}${o.title.length>50?'...':''}</div>
+      <div style="font-size:10px;color:#9CA3AF;">📍 ${o.city} · ${o.partner_name}</div>
+    </div>
+  `).join('');
+}
+
+/**
+ * FONCTION : simShowOffer
+ * DESCRIPTION : Affiche le détail d'une offre dans le simulateur
+ * PARAMÈTRES :
+ *   - offerId (string) : UUID de l'offre à afficher
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-content
+ */
+function simShowOffer(offerId) {
+  if (!offerId || !window._simData) return;
+  const offer = window._simData.offs.find(o => o.id === offerId);
+  if (!offer) return;
+
+  const content = document.getElementById('sim-content');
+  content.innerHTML = `
+    <div style="padding:10px;">
+      <div onclick="simSelectCategory(null)" style="color:#003189;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:10px;">← Retour</div>
+      ${offer.image_url ? `<img src="${offer.image_url}" style="width:100%;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'">` : ''}
+      ${offer.flash ? '<span style="background:#FF6B00;color:white;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;">VENTE FLASH</span><br><br>' : ''}
+      <div style="background:#003189;color:white;padding:4px 10px;border-radius:6px;display:inline-block;font-size:13px;font-weight:700;margin-bottom:8px;">${offer.discount}</div>
+      <div style="font-size:14px;font-weight:700;color:#001F5E;margin-bottom:4px;">${offer.title}</div>
+      <div style="font-size:11px;color:#6B7280;margin-bottom:10px;">par ${offer.partner_name}</div>
+      <div style="font-size:11px;color:#374151;margin-bottom:6px;">📍 ${offer.city}</div>
+      <div style="height:1px;background:#F3F4F6;margin:10px 0;"></div>
+      <div style="font-size:11px;color:#4B5563;line-height:16px;margin-bottom:10px;">${offer.description || ''}</div>
+      <div style="background:#FF6B00;color:white;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;">
+        Profiter de l'offre →
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * FONCTION : simNavigate
+ * DESCRIPTION : Navigue entre les écrans du simulateur (accueil, recherche, favoris...)
+ * PARAMÈTRES :
+ *   - screen (string) : nom de l'écran (home, search, favorites, history, profile)
+ * RETOURNE : rien
+ * MODIFIE : contenu de #sim-content, style des boutons de navigation
+ */
+function simNavigate(screen) {
+  // Met à jour la nav bar
+  ['home','search','favorites','history','profile'].forEach(s => {
+    const el = document.getElementById(`sim-nav-${s}`);
+    if (el) el.querySelector('span:last-child').style.color = 'rgba(255,255,255,0.6)';
+  });
+  const active = document.getElementById(`sim-nav-${screen}`);
+  if (active) active.querySelector('span:last-child').style.color = '#FF6B00';
+
+  const content = document.getElementById('sim-content');
+
+  if (screen === 'home') {
+    if (window._simData) simShowHome(window._simData.newOffers, window._simData.activeBanner);
+    return;
+  }
+
+  const messages = {
+    search: '🔍 Recherche\n\nTapez pour rechercher des offres...',
+    favorites: '❤️ Mes Favoris\n\nVos offres favorites apparaîtront ici.',
+    history: '🕐 Historique\n\nLes offres consultées apparaîtront ici.',
+    profile: '👤 Mon Profil\n\nGérez vos informations et préférences.',
+  };
+
+  content.innerHTML = `
+    <div style="text-align:center;padding:40px 20px;color:#6B7280;font-size:12px;line-height:20px;white-space:pre-line;">
+      ${messages[screen] || ''}
+    </div>
+  `;
+}
   
   // ============================================================
   // ALERT
