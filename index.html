@@ -240,6 +240,34 @@
         <h2>Gestion des offres</h2>
         <button class="btn-primary" onclick="showSection('add-offer')">➕ Nouvelle offre</button>
       </div>
+      <div id="section-offers" class="section">
+  <div class="section-header">
+    <h2>Gestion des offres</h2>
+    <button class="btn-primary" onclick="showSection('add-offer', this)">➕ Nouvelle offre</button>
+  </div>
+
+  <!-- Barre de recherche et filtres -->
+  <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+    <input 
+      type="text" 
+      id="search-offers" 
+      placeholder="🔍 Rechercher par titre, partenaire, ville..." 
+      oninput="filterOffers()"
+      style="flex:1;padding:10px 14px;border:1px solid #003189;border-radius:8px;font-size:14px;min-width:200px;">
+    <select id="filter-category" onchange="filterOffers()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;">
+      <option value="">Toutes les catégories</option>
+    </select>
+    <select id="filter-status" onchange="filterOffers()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;">
+      <option value="">Tous les statuts</option>
+      <option value="active">Actives</option>
+      <option value="inactive">Inactives</option>
+      <option value="flash">Flash</option>
+      <option value="new">Nouvelles</option>
+    </select>
+    <button onclick="resetSearch()" style="background:#6B7280;color:white;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;">✕ Réinitialiser</button>
+  </div>
+  <p id="search-count" style="font-size:13px;color:#6B7280;margin-bottom:12px;"></p>
+        
       <div class="table-wrapper">
         <table>
           <thead>
@@ -1050,8 +1078,116 @@ function togglePassword() {
         </td>
       </tr>`;
     }).join('');
+    // Remplit le select des catégories pour le filtre
+    const catSelect = document.getElementById('filter-category');
+    const currentVal = catSelect.value;
+    catSelect.innerHTML = '<option value="">Toutes les catégories</option>';
+    allCategories.forEach(cat => {
+      catSelect.innerHTML += `<option value="${cat.id}" ${currentVal === cat.id ? 'selected' : ''}>${cat.icon} ${cat.label}</option>`;
+    });
+
+    // Affiche le compteur total
+    document.getElementById('search-count').textContent = `${allOffers.filter(o => !o.deleted_at).length} offres au total`;
+  }
+ /**
+ * FONCTION : filterOffers
+ * DESCRIPTION : Filtre la liste des offres en temps réel selon la recherche et les filtres
+ *               Appelée à chaque frappe dans la barre de recherche ou changement de filtre
+ *               Travaille sur les données déjà chargées (allOffers) sans appel réseau
+ * PARAMÈTRES : aucun (lit #search-offers, #filter-category, #filter-status)
+ * RETOURNE : rien
+ * MODIFIE : contenu de #offers-table, texte de #search-count
+ */
+function filterOffers() {
+  const query = document.getElementById('search-offers').value.toLowerCase().trim();
+  const categoryFilter = document.getElementById('filter-category').value;
+  const statusFilter = document.getElementById('filter-status').value;
+
+  const filtered = allOffers.filter(o => {
+    // Exclure les offres en poubelle
+    if (o.deleted_at) return false;
+
+    // Filtre texte — recherche dans titre, partenaire et ville
+    if (query) {
+      const match =
+        (o.title || '').toLowerCase().includes(query) ||
+        (o.partner_name || '').toLowerCase().includes(query) ||
+        (o.city || '').toLowerCase().includes(query);
+      if (!match) return false;
+    }
+
+    // Filtre catégorie
+    if (categoryFilter && o.category_id !== categoryFilter) return false;
+
+    // Filtre statut
+    if (statusFilter === 'active' && !o.active) return false;
+    if (statusFilter === 'inactive' && o.active) return false;
+    if (statusFilter === 'flash' && !o.flash) return false;
+    if (statusFilter === 'new' && !o.is_new) return false;
+
+    return true;
+  });
+
+  // Mise à jour du compteur
+  document.getElementById('search-count').textContent =
+    filtered.length === allOffers.filter(o => !o.deleted_at).length
+      ? `${filtered.length} offres au total`
+      : `${filtered.length} résultat${filtered.length !== 1 ? 's' : ''} sur ${allOffers.filter(o => !o.deleted_at).length} offres`;
+
+  // Mise à jour du tableau
+  const tbody = document.getElementById('offers-table');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9CA3AF;padding:20px;">Aucune offre trouvée</td></tr>';
+    return;
   }
 
+  tbody.innerHTML = filtered.map(o => {
+    const cat = allCategories.find(c => c.id === o.category_id);
+    return `<tr>
+      <td><strong>${o.title}</strong>${cat ? `<br><small style="color:#9CA3AF;">${cat.icon} ${cat.label}</small>` : ''}</td>
+      <td>${o.partner_name}</td>
+      <td>${o.city || '-'}</td>
+      <td><span class="badge badge-orange">${o.discount}</span></td>
+      <td>
+        <label style="cursor:pointer">
+          <input type="checkbox" ${o.flash ? 'checked' : ''} onchange="toggleField('${o.id}', 'flash', this.checked)">
+          ⚡
+        </label>
+      </td>
+      <td>
+        <label style="cursor:pointer">
+          <input type="checkbox" ${o.is_new ? 'checked' : ''} onchange="toggleField('${o.id}', 'is_new', this.checked)">
+          ✨
+        </label>
+      </td>
+      <td>
+        <label style="cursor:pointer">
+          <input type="checkbox" ${o.active ? 'checked' : ''} onchange="toggleField('${o.id}', 'active', this.checked)">
+          ${o.active ? '<span class="badge badge-green">Actif</span>' : '<span class="badge badge-red">Inactif</span>'}
+        </label>
+      </td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-edit" onclick="openEdit('${o.id}')">✏️ Modifier</button>
+        <button class="btn-danger" onclick="deleteOffer('${o.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/**
+ * FONCTION : resetSearch
+ * DESCRIPTION : Réinitialise tous les filtres et la barre de recherche
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : valeurs de #search-offers, #filter-category, #filter-status, recharge la liste complète
+ */
+function resetSearch() {
+  document.getElementById('search-offers').value = '';
+  document.getElementById('filter-category').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('search-count').textContent = '';
+  loadOffers();
+}
   /**
  * FONCTION : toggleField
  * DESCRIPTION : Active ou désactive un champ booléen d'une offre (flash, active, is_new)
