@@ -572,40 +572,58 @@
   </div>
 
   <!-- Bannière événement -->
-  <div class="form-card" style="border-bottom-color:#FF6B00;">
-    <h3>🎄 Bannière événement</h3>
-    <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
-      Affiche un message spécial en haut de l'app (Noël, tombola, jeux concours...). Laissez vide pour désactiver.
-    </p>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Emoji</label>
-        <input type="text" id="banner-emoji" placeholder="Ex: 🎄">
-      </div>
-      <div class="form-group">
-        <label>Message</label>
-        <input type="text" id="banner-message" placeholder="Ex: Joyeux Noël ! Offres spéciales jusqu'au 31/12">
-      </div>
-      <div class="form-group">
-        <label>Couleur de fond</label>
-        <input type="color" id="banner-color" value="#FF6B00">
-      </div>
-      <div class="form-group">
-        <label>Lien (optionnel)</label>
-        <input type="url" id="banner-link" placeholder="https://...">
+<div class="form-card" style="border-bottom-color:#FF6B00;">
+  <h3>🎄 Bannière événement</h3>
+  <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+    Affiche une bannière en haut de l'app. Idéale pour un événement spécial, une tombola, Noël...
+    <br><strong>Proportion recommandée : 16:9 (ex: 800x450px)</strong>
+  </p>
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Image de la bannière</label>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input type="file" id="banner-image-file" accept="image/jpeg,image/png,image/jpg" onchange="uploadBannerImage(this)" style="padding:8px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;">
+        <input type="url" id="banner-image-url" placeholder="Ou collez une URL directement...">
+        <small style="color:#9CA3AF;">Format recommandé : JPG, 800x450px (16:9). Taille max : 1MB.</small>
+        <div id="banner-upload-status" style="font-size:12px;color:#6B7280;display:none;"></div>
+        <img id="banner-image-thumb" src="" style="display:none;width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:4px;">
       </div>
     </div>
-    <div style="margin-top:12px;" id="banner-preview-wrapper" style="display:none;">
-      <p style="font-size:12px;color:#6B7280;margin-bottom:6px;">Aperçu :</p>
-      <div id="banner-preview" style="padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:8px;">
-      </div>
+    <div class="form-group full">
+      <label>Message (optionnel)</label>
+      <input type="text" id="banner-message" placeholder="Ex: Joyeux Noël ! Offres spéciales jusqu'au 31/12">
+      <small style="color:#9CA3AF;">Laissez vide pour afficher uniquement l'image.</small>
     </div>
-    <div class="form-actions">
-      <button class="btn-orange" onclick="previewBanner()">👁️ Aperçu</button>
-      <button class="btn-primary" onclick="saveBanner()">💾 Publier</button>
-      <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🗑️ Désactiver</button>
+    <div class="form-group full">
+      <label>Offre mise en avant (optionnel)</label>
+      <select id="banner-offer-id">
+        <option value="">Aucune — bannière sans lien</option>
+      </select>
+      <small style="color:#9CA3AF;">En cliquant sur la bannière, l'utilisateur sera redirigé vers cette offre.</small>
+    </div>
+    <div class="form-group">
+      <label>Statut</label>
+      <div class="toggle-group">
+        <label class="toggle-item">
+          <input type="checkbox" id="banner-active" checked> Bannière active
+        </label>
+      </div>
     </div>
   </div>
+
+  <!-- Aperçu -->
+  <div id="banner-preview-wrapper" style="display:none;margin-top:16px;">
+    <p style="font-size:12px;color:#6B7280;margin-bottom:6px;">Aperçu :</p>
+    <div id="banner-preview" style="border-radius:10px;overflow:hidden;max-width:380px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-orange" onclick="previewBanner()">👁️ Aperçu</button>
+    <button class="btn-primary" onclick="saveBanner()">💾 Publier</button>
+    <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🗑️ Désactiver</button>
+  </div>
+</div>
 
   <!-- Sauvegarde -->
   <div class="form-card" style="border-bottom-color:#10B981;">
@@ -2107,68 +2125,127 @@ function saveEmail() {
 }
 
 /**
- * FONCTION : previewBanner
- * DESCRIPTION : Affiche un aperçu de la bannière événement
- * PARAMÈTRES : aucun (lit #banner-emoji, #banner-message, #banner-color)
+ * FONCTION : uploadBannerImage
+ * DESCRIPTION : Upload une image de bannière vers Supabase Storage
+ * PARAMÈTRES :
+ *   - input (HTMLInputElement) : l'élément file input
  * RETOURNE : rien
- * MODIFIE : contenu et style de #banner-preview
+ * MODIFIE : #banner-image-url, #banner-upload-status, #banner-image-thumb
+ */
+async function uploadBannerImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const status = document.getElementById('banner-upload-status');
+  const thumb = document.getElementById('banner-image-thumb');
+  const urlInput = document.getElementById('banner-image-url');
+
+  status.style.display = 'block';
+  status.style.color = '#6B7280';
+  status.textContent = '⏳ Upload en cours...';
+
+  const fileName = 'banner-' + Date.now() + '-' + file.name.replace(/\s/g, '-');
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/offers-images/${fileName}`;
+
+  try {
+    const res = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': file.type,
+        'Cache-Control': '3600',
+      },
+      body: file
+    });
+
+    if (res.ok) {
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/offers-images/${fileName}`;
+      urlInput.value = publicUrl;
+      status.style.color = '#065F46';
+      status.textContent = '✅ Image uploadée avec succès !';
+      thumb.src = publicUrl;
+      thumb.style.display = 'block';
+    } else {
+      status.style.color = '#991B1B';
+      status.textContent = '❌ Erreur lors de l\'upload.';
+    }
+  } catch (e) {
+    status.style.color = '#991B1B';
+    status.textContent = '❌ Erreur réseau.';
+  }
+}
+
+/**
+ * FONCTION : previewBanner
+ * DESCRIPTION : Affiche un aperçu de la bannière avec image et message
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #banner-preview, affichage de #banner-preview-wrapper
  */
 function previewBanner() {
-  const emoji = document.getElementById('banner-emoji').value;
-  const message = document.getElementById('banner-message').value;
-  const color = document.getElementById('banner-color').value;
+  const imageUrl = document.getElementById('banner-image-url').value.trim();
+  const message = document.getElementById('banner-message').value.trim();
 
-  if (!message) {
-    showAlert('❌ Renseignez un message pour la bannière', 'error', 0);
+  if (!imageUrl) {
+    showAlert('❌ Ajoutez une image pour prévisualiser', 'error', 0);
     return;
   }
 
   const preview = document.getElementById('banner-preview');
-  preview.style.backgroundColor = color;
+  const wrapper = document.getElementById('banner-preview-wrapper');
+
   preview.innerHTML = `
-    <span style="font-size:20px;">${emoji}</span>
-    <span style="color:white;font-size:14px;font-weight:600;">${message}</span>
+    <img src="${imageUrl}" style="width:100%;display:block;" onerror="this.style.display='none'">
+    ${message ? `<div style="padding:10px 14px;background:#003189;color:white;font-size:13px;font-weight:600;">${message}</div>` : ''}
   `;
-  document.getElementById('banner-preview-wrapper').style.display = 'block';
+  wrapper.style.display = 'block';
 }
 
 /**
  * FONCTION : saveBanner
- * DESCRIPTION : Sauvegarde et publie la bannière événement dans Supabase
- * PARAMÈTRES : aucun (lit les champs #banner-*)
+ * DESCRIPTION : Sauvegarde la bannière dans Supabase pour qu'elle apparaisse dans l'app
+ * PARAMÈTRES : aucun
  * RETOURNE : rien
- * MODIFIE : table settings dans Supabase (ou localStorage si pas de table)
+ * MODIFIE : table settings dans Supabase (ou localStorage)
  */
 async function saveBanner() {
-  const emoji = document.getElementById('banner-emoji').value;
+  const imageUrl = document.getElementById('banner-image-url').value.trim();
   const message = document.getElementById('banner-message').value.trim();
-  const color = document.getElementById('banner-color').value;
-  const link = document.getElementById('banner-link').value.trim();
+  const offerId = document.getElementById('banner-offer-id').value;
+  const active = document.getElementById('banner-active').checked;
 
-  if (!message) {
-    showAlert('❌ Renseignez un message pour la bannière', 'error', 0);
+  if (!imageUrl) {
+    showAlert('❌ Ajoutez une image pour la bannière', 'error', 0);
     return;
   }
 
-  const banner = { emoji, message, color, link, active: true };
+  const banner = { imageUrl, message, offerId, active };
   localStorage.setItem('event_banner', JSON.stringify(banner));
+  addLog('🎄 Bannière publiée', `Image: ${imageUrl.split('/').pop()} — Actif: ${active}`);
   showAlert('✅ Bannière publiée ! Elle apparaîtra dans l\'app au prochain chargement.', 'success', 0);
 }
 
 /**
  * FONCTION : clearBanner
- * DESCRIPTION : Désactive et supprime la bannière événement
+ * DESCRIPTION : Désactive et supprime la bannière
  * PARAMÈTRES : aucun
  * RETOURNE : rien
- * MODIFIE : supprime 'event_banner' du localStorage
+ * MODIFIE : supprime 'event_banner' du localStorage, vide les champs
  */
 function clearBanner() {
   localStorage.removeItem('event_banner');
-  document.getElementById('banner-emoji').value = '';
+  document.getElementById('banner-image-url').value = '';
   document.getElementById('banner-message').value = '';
+  document.getElementById('banner-offer-id').value = '';
+  document.getElementById('banner-active').checked = true;
   document.getElementById('banner-preview-wrapper').style.display = 'none';
+  document.getElementById('banner-image-thumb').style.display = 'none';
+  addLog('🗑️ Bannière désactivée', 'Bannière événement supprimée');
   showAlert('✅ Bannière désactivée', 'success', 0);
 }
+
+
 
 /**
  * FONCTION : exportSQL
@@ -2239,6 +2316,29 @@ function loadSettings() {
 
   const savedPassword = localStorage.getItem('admin_password');
   if (savedPassword) window._ADMIN_PASSWORD = savedPassword;
+
+  // Remplit le select des offres pour la bannière
+const bannerSelect = document.getElementById('banner-offer-id');
+if (bannerSelect) {
+  bannerSelect.innerHTML = '<option value="">Aucune — bannière sans lien</option>';
+  allOffers.filter(o => o.active && !o.deleted_at).forEach(o => {
+    bannerSelect.innerHTML += `<option value="${o.id}">${o.title}</option>`;
+  });
+}
+
+// Charge la bannière sauvegardée
+  const savedBanner = localStorage.getItem('event_banner');
+  if (savedBanner) {
+    const b = JSON.parse(savedBanner);
+    document.getElementById('banner-image-url').value = b.imageUrl || '';
+    document.getElementById('banner-message').value = b.message || '';
+    document.getElementById('banner-offer-id').value = b.offerId || '';
+    document.getElementById('banner-active').checked = b.active !== false;
+    if (b.imageUrl) {
+      document.getElementById('banner-image-thumb').src = b.imageUrl;
+      document.getElementById('banner-image-thumb').style.display = 'block';
+    }
+  }
 }
 
  /**
