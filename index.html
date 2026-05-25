@@ -2346,6 +2346,11 @@ async function saveBanner() {
     featured_title: featuredTitle || null,
     active: false
   });
+
+  console.log('featuredOfferId:', featuredOfferId);
+  console.log('allOffers length:', allOffers.length);
+  console.log('finalName:', finalName);
+  console.log('ok:', ok);
   
   if (ok) {
     showAlert(`✅ Bannière "${name}" sauvegardée !`, 'success', 0);
