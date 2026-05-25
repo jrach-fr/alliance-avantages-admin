@@ -2347,11 +2347,6 @@ async function saveBanner() {
     featured_title: featuredTitle || null,
     active: false
   });
-
-  console.log('featuredOfferId:', featuredOfferId);
-  console.log('allOffers length:', allOffers.length);
-  console.log('finalName:', finalName);
-  console.log('ok:', ok);
   
   if (ok) {
     showAlert(`✅ Bannière "${finalName}" sauvegardée !`, 'success', 0);
@@ -2375,6 +2370,8 @@ function resetBannerForm() {
   document.getElementById('banner-message').value = '';
   document.getElementById('banner-image-url').value = '';
   document.getElementById('banner-offer-id').value = '';
+  document.getElementById('banner-featured-offer').value = '';
+  document.getElementById('banner-featured-title').value = '';
   document.getElementById('banner-image-thumb').style.display = 'none';
   document.getElementById('banner-upload-status').style.display = 'none';
 }
