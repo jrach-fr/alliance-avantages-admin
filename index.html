@@ -573,57 +573,55 @@
 
   <!-- Bannière événement -->
 <div class="form-card" style="border-bottom-color:#FF6B00;">
-  <h3>🎄 Bannière événement</h3>
+  <h3>🎄 Bannières événement</h3>
   <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
-    Affiche une bannière en haut de l'app. Idéale pour un événement spécial, une tombola, Noël...
+    Préparez vos bannières à l'avance et activez-les quand vous voulez.
     <br><strong>Proportion recommandée : 16:9 (ex: 800x450px)</strong>
   </p>
-  <div class="form-grid">
-    <div class="form-group full">
-      <label>Image de la bannière</label>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <input type="file" id="banner-image-file" accept="image/jpeg,image/png,image/jpg" onchange="uploadBannerImage(this)" style="padding:8px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;">
-        <input type="url" id="banner-image-url" placeholder="Ou collez une URL directement...">
-        <small style="color:#9CA3AF;">Format recommandé : JPG, 800x450px (16:9). Taille max : 1MB.</small>
-        <div id="banner-upload-status" style="font-size:12px;color:#6B7280;display:none;"></div>
-        <img id="banner-image-thumb" src="" style="display:none;width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:4px;">
+
+  <!-- Formulaire ajout bannière -->
+  <div style="background:#F4F6FB;border-radius:10px;padding:16px;margin-bottom:20px;">
+    <h4 style="color:#001F5E;margin-bottom:14px;">➕ Nouvelle bannière</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nom * (pour la retrouver facilement)</label>
+        <input type="text" id="banner-name" placeholder="Ex: Noël 2026, Été 2026...">
+      </div>
+      <div class="form-group">
+        <label>Message (optionnel)</label>
+        <input type="text" id="banner-message" placeholder="Ex: Joyeux Noël ! Offres spéciales...">
+      </div>
+      <div class="form-group full">
+        <label>Image *</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <input type="file" id="banner-image-file" accept="image/jpeg,image/png,image/jpg" onchange="uploadBannerImage(this)" style="padding:8px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;">
+          <input type="url" id="banner-image-url" placeholder="Ou collez une URL directement...">
+          <small style="color:#9CA3AF;">Format recommandé : JPG, 800x450px (16:9). Taille max : 1MB.</small>
+          <div id="banner-upload-status" style="font-size:12px;display:none;"></div>
+          <img id="banner-image-thumb" src="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;">
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Offre mise en avant (optionnel)</label>
+        <select id="banner-offer-id">
+          <option value="">Aucune — bannière sans lien</option>
+        </select>
+        <small style="color:#9CA3AF;">En cliquant sur la bannière, l'utilisateur sera redirigé vers cette offre.</small>
       </div>
     </div>
-    <div class="form-group full">
-      <label>Message (optionnel)</label>
-      <input type="text" id="banner-message" placeholder="Ex: Joyeux Noël ! Offres spéciales jusqu'au 31/12">
-      <small style="color:#9CA3AF;">Laissez vide pour afficher uniquement l'image.</small>
-    </div>
-    <div class="form-group full">
-      <label>Offre mise en avant (optionnel)</label>
-      <select id="banner-offer-id">
-        <option value="">Aucune — bannière sans lien</option>
-      </select>
-      <small style="color:#9CA3AF;">En cliquant sur la bannière, l'utilisateur sera redirigé vers cette offre.</small>
-    </div>
-    <div class="form-group">
-      <label>Statut</label>
-      <div class="toggle-group">
-        <label class="toggle-item">
-          <input type="checkbox" id="banner-active" checked> Bannière active
-        </label>
-      </div>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="saveBanner()">💾 Sauvegarder la bannière</button>
+      <button onclick="resetBannerForm()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 Réinitialiser</button>
     </div>
   </div>
 
-  <!-- Aperçu -->
-  <div id="banner-preview-wrapper" style="display:none;margin-top:16px;">
-    <p style="font-size:12px;color:#6B7280;margin-bottom:6px;">Aperçu :</p>
-    <div id="banner-preview" style="border-radius:10px;overflow:hidden;max-width:380px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-    </div>
+  <!-- Liste des bannières sauvegardées -->
+  <h4 style="color:#001F5E;margin-bottom:12px;">📋 Bannières sauvegardées</h4>
+  <div id="banners-list" style="display:flex;flex-direction:column;gap:10px;">
+    <p style="color:#9CA3AF;font-size:13px;">Chargement...</p>
   </div>
-
-  <div class="form-actions">
-    <button class="btn-orange" onclick="previewBanner()">👁️ Aperçu</button>
-    <button class="btn-primary" onclick="saveBanner()">💾 Publier</button>
-    <button onclick="clearBanner()" style="background:#6B7280;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 Réinitialiser</button>  </div>
 </div>
-
+ 
   <!-- Sauvegarde -->
   <div class="form-card" style="border-bottom-color:#10B981;">
     <h3>💾 Sauvegarde</h3>
@@ -2176,75 +2174,184 @@ async function uploadBannerImage(input) {
 }
 
 /**
- * FONCTION : previewBanner
- * DESCRIPTION : Affiche un aperçu de la bannière avec image et message
- * PARAMÈTRES : aucun
- * RETOURNE : rien
- * MODIFIE : contenu de #banner-preview, affichage de #banner-preview-wrapper
- */
-function previewBanner() {
-  const imageUrl = document.getElementById('banner-image-url').value.trim();
-  const message = document.getElementById('banner-message').value.trim();
-
-  if (!imageUrl) {
-    showAlert('❌ Ajoutez une image pour prévisualiser', 'error', 0);
-    return;
-  }
-
-  const preview = document.getElementById('banner-preview');
-  const wrapper = document.getElementById('banner-preview-wrapper');
-
-  preview.innerHTML = `
-    <img src="${imageUrl}" style="width:100%;display:block;" onerror="this.style.display='none'">
-    ${message ? `<div style="padding:10px 14px;background:#003189;color:white;font-size:13px;font-weight:600;">${message}</div>` : ''}
-  `;
-  wrapper.style.display = 'block';
-}
-
-/**
  * FONCTION : saveBanner
- * DESCRIPTION : Sauvegarde la bannière dans Supabase pour qu'elle apparaisse dans l'app
- * PARAMÈTRES : aucun
+ * DESCRIPTION : Sauvegarde une nouvelle bannière dans Supabase
+ *               La bannière est sauvegardée mais pas activée automatiquement
+ * PARAMÈTRES : aucun (lit les champs #banner-*)
  * RETOURNE : rien
- * MODIFIE : table settings dans Supabase (ou localStorage)
+ * MODIFIE : insère une bannière dans la table banners, recharge la liste
  */
 async function saveBanner() {
+  const name = document.getElementById('banner-name').value.trim();
   const imageUrl = document.getElementById('banner-image-url').value.trim();
   const message = document.getElementById('banner-message').value.trim();
   const offerId = document.getElementById('banner-offer-id').value;
-  const active = document.getElementById('banner-active').checked;
 
+  if (!name) {
+    showAlert('❌ Donnez un nom à la bannière', 'error', 0);
+    return;
+  }
   if (!imageUrl) {
-    showAlert('❌ Ajoutez une image pour la bannière', 'error', 0);
+    showAlert('❌ Ajoutez une image à la bannière', 'error', 0);
     return;
   }
 
-  const banner = { imageUrl, message, offerId, active };
-  localStorage.setItem('event_banner', JSON.stringify(banner));
-  addLog('🎄 Bannière publiée', `Image: ${imageUrl.split('/').pop()} — Actif: ${active}`);
-  showAlert('✅ Bannière publiée ! Elle apparaîtra dans l\'app au prochain chargement.', 'success', 0);
+  const ok = await supabaseInsert('banners', {
+    name,
+    image_url: imageUrl,
+    message: message || null,
+    offer_id: offerId || null,
+    active: false
+  });
+
+  if (ok) {
+    showAlert(`✅ Bannière "${name}" sauvegardée !`, 'success', 0);
+    addLog('🎄 Bannière sauvegardée', `"${name}"`);
+    resetBannerForm();
+    loadBanners();
+  } else {
+    showAlert('❌ Erreur lors de la sauvegarde', 'error', 0);
+  }
 }
 
 /**
- * FONCTION : clearBanner
- * DESCRIPTION : Réinitialise tous les champs de la bannière sans la supprimer de l'app
- *               Différent de "Bannière active" qui permet de préparer sans afficher
+ * FONCTION : resetBannerForm
+ * DESCRIPTION : Réinitialise le formulaire de création de bannière
  * PARAMÈTRES : aucun
  * RETOURNE : rien
- * MODIFIE : vide tous les champs #banner-*, supprime 'event_banner' du localStorage
+ * MODIFIE : vide tous les champs #banner-*
  */
-function clearBanner() {
-  localStorage.removeItem('event_banner');
-  document.getElementById('banner-image-url').value = '';
+function resetBannerForm() {
+  document.getElementById('banner-name').value = '';
   document.getElementById('banner-message').value = '';
+  document.getElementById('banner-image-url').value = '';
   document.getElementById('banner-offer-id').value = '';
-  document.getElementById('banner-active').checked = true;
-  document.getElementById('banner-preview-wrapper').style.display = 'none';
   document.getElementById('banner-image-thumb').style.display = 'none';
-  addLog('🗑️ Bannière désactivée', 'Bannière événement supprimée');
-  showAlert('✅ Bannière désactivée', 'success', 0);
+  document.getElementById('banner-upload-status').style.display = 'none';
 }
 
+/**
+ * FONCTION : loadBanners
+ * DESCRIPTION : Charge et affiche la liste de toutes les bannières depuis Supabase
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : contenu de #banners-list
+ */
+async function loadBanners() {
+  const banners = await supabaseQuery('banners', { select: '*', order: 'created_at.desc' });
+  const container = document.getElementById('banners-list');
+
+  if (!banners.length) {
+    container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">Aucune bannière sauvegardée</p>';
+    return;
+  }
+
+  container.innerHTML = banners.map(b => {
+    const offer = allOffers.find(o => o.id === b.offer_id);
+    return `
+    <div style="background:white;border-radius:10px;border:1px solid #E5E7EB;border-left:4px solid ${b.active ? '#10B981' : '#E5E7EB'};overflow:hidden;">
+      <div style="display:flex;gap:12px;padding:12px;">
+        <img src="${b.image_url}" style="width:120px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;" onerror="this.style.display='none'">
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <strong style="color:#001F5E;">${b.name}</strong>
+            ${b.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge" style="background:#F3F4F6;color:#6B7280;">Inactive</span>'}
+          </div>
+          ${b.message ? `<p style="font-size:12px;color:#6B7280;margin:0 0 4px;">${b.message}</p>` : ''}
+          ${offer ? `<p style="font-size:11px;color:#9CA3AF;margin:0;">🔗 ${offer.title}</p>` : ''}
+          <p style="font-size:11px;color:#9CA3AF;margin:4px 0 0;">${new Date(b.created_at).toLocaleDateString('fr-FR')}</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;padding:8px 12px;background:#F4F6FB;border-top:1px solid #E5E7EB;">
+        ${b.active 
+          ? `<button class="btn-edit" onclick="deactivateBanner('${b.id}')">⏸️ Désactiver</button>`
+          : `<button class="btn-primary" onclick="activateBanner('${b.id}', '${b.name}')">▶️ Activer</button>`
+        }
+        <button class="btn-danger" onclick="deleteBanner('${b.id}', '${b.name}', '${b.image_url}')">🗑️ Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/**
+ * FONCTION : activateBanner
+ * DESCRIPTION : Active une bannière et désactive toutes les autres
+ *               Une seule bannière peut être active à la fois
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la bannière à activer
+ *   - name (string) : nom de la bannière pour le log
+ * RETOURNE : rien
+ * MODIFIE : champ active dans Supabase pour toutes les bannières, recharge la liste
+ */
+async function activateBanner(id, name) {
+  // Désactive toutes les bannières d'abord
+  const allBanners = await supabaseQuery('banners', { select: 'id' });
+  for (const b of allBanners) {
+    await supabaseUpdate('banners', b.id, { active: false });
+  }
+  // Active la bannière choisie
+  const ok = await supabaseUpdate('banners', id, { active: true });
+  if (ok) {
+    showAlert(`✅ Bannière "${name}" activée !`, 'success', 0);
+    addLog('▶️ Bannière activée', `"${name}"`);
+    loadBanners();
+  } else {
+    showAlert('❌ Erreur lors de l\'activation', 'error', 0);
+  }
+}
+
+/**
+ * FONCTION : deactivateBanner
+ * DESCRIPTION : Désactive une bannière sans la supprimer
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la bannière à désactiver
+ * RETOURNE : rien
+ * MODIFIE : champ active = false dans Supabase, recharge la liste
+ */
+async function deactivateBanner(id) {
+  const ok = await supabaseUpdate('banners', id, { active: false });
+  if (ok) {
+    showAlert('✅ Bannière désactivée', 'success', 0);
+    addLog('⏸️ Bannière désactivée', `ID: ${id}`);
+    loadBanners();
+  } else {
+    showAlert('❌ Erreur lors de la désactivation', 'error', 0);
+  }
+}
+
+/**
+ * FONCTION : deleteBanner
+ * DESCRIPTION : Supprime définitivement une bannière et son image dans Supabase Storage
+ * PARAMÈTRES :
+ *   - id (string) : UUID de la bannière
+ *   - name (string) : nom pour la confirmation et le log
+ *   - imageUrl (string) : URL de l'image pour la supprimer du storage
+ * RETOURNE : rien
+ * MODIFIE : supprime la bannière dans Supabase et l'image dans Storage
+ */
+async function deleteBanner(id, name, imageUrl) {
+  if (!confirm(`Supprimer définitivement la bannière "${name}" et son image ?`)) return;
+
+  // Supprime l'image du storage
+  const fileName = imageUrl.split('/').pop();
+  await fetch(`${SUPABASE_URL}/storage/v1/object/offers-images/${fileName}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    }
+  });
+
+  // Supprime la bannière de la base
+  const ok = await supabaseDelete('banners', id);
+  if (ok) {
+    showAlert(`🗑️ Bannière "${name}" supprimée !`, 'success', 0);
+    addLog('🗑️ Bannière supprimée', `"${name}" + image`);
+    loadBanners();
+  } else {
+    showAlert('❌ Erreur lors de la suppression', 'error', 0);
+  }
+}
 
 
 /**
@@ -2305,14 +2412,16 @@ function loadSettings() {
   const email = localStorage.getItem('contact_email');
   if (email) document.getElementById('settings-email').value = email;
 
-  const banner = localStorage.getItem('event_banner');
-  if (banner) {
-    const b = JSON.parse(banner);
-    document.getElementById('banner-emoji').value = b.emoji || '';
-    document.getElementById('banner-message').value = b.message || '';
-    document.getElementById('banner-color').value = b.color || '#FF6B00';
-    document.getElementById('banner-link').value = b.link || '';
+  // Remplit le select des offres pour la bannière
+  const bannerSelect = document.getElementById('banner-offer-id');
+  if (bannerSelect) {
+    bannerSelect.innerHTML = '<option value="">Aucune — bannière sans lien</option>';
+    allOffers.filter(o => o.active && !o.deleted_at).forEach(o => {
+      bannerSelect.innerHTML += `<option value="${o.id}">${o.title}</option>`;
+    });
   }
+  // Charge la liste des bannières
+  loadBanners();
 
   const savedPassword = localStorage.getItem('admin_password');
   if (savedPassword) window._ADMIN_PASSWORD = savedPassword;
