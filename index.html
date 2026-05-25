@@ -2764,18 +2764,50 @@ function simShowHome(newOffers, activeBanner) {
     </div>
   ` : '';
 
-  const bannerHtml = activeBanner ? `
-    <div style="margin:8px 10px;border-radius:10px;overflow:hidden;cursor:pointer;" onclick="simShowOffer('${activeBanner.offer_id || ''}')">
-      <img src="${activeBanner.image_url}" style="width:100%;display:block;" onerror="this.style.display='none'">
-      ${activeBanner.message ? `<div style="background:#003189;color:white;padding:6px 10px;font-size:10px;font-weight:600;">${activeBanner.message}</div>` : ''}
-    </div>
-  ` : `
-    <div style="margin:8px 10px;border-radius:10px;background:#FFFFFF;height:120px;display:flex;justify-content:center;align-items:center;border:1px solid #E5E7EB;">
-      <span style="color:#E5E7EB;font-size:30px;">🖼️</span>
-    </div>
-  `;
-
-  content.innerHTML = offersHtml + bannerHtml;
+    let bannerHtml = '';
+  
+    if (activeBanner && activeBanner.featured_offer_id) {
+      // Mode offre vedette
+      const featuredOffer = window._simData?.offs.find(o => o.id === activeBanner.featured_offer_id);
+      if (featuredOffer) {
+        bannerHtml = `
+          <div onclick="simShowOffer('${featuredOffer.id}')" style="margin:8px 10px;border-radius:14px;overflow:hidden;cursor:pointer;background:linear-gradient(135deg, #003189, #001F5E);box-shadow:0 4px 16px rgba(0,49,137,0.3);">
+            ${featuredOffer.image_url ? `<img src="${featuredOffer.image_url}" style="width:100%;height:140px;object-fit:cover;display:block;" onerror="this.style.display='none'">` : ''}
+            <div style="padding:12px;">
+              <div style="color:#FF6B00;font-size:10px;font-weight:800;margin-bottom:4px;">
+                ${activeBanner.featured_title || '⭐ OFFRE VEDETTE'}
+              </div>
+              <div style="color:#FFFFFF;font-size:13px;font-weight:700;margin-bottom:6px;line-height:18px;">
+                ${featuredOffer.title.substring(0, 60)}${featuredOffer.title.length > 60 ? '...' : ''}
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#93C5FD;font-size:10px;">📍 ${featuredOffer.city} · ${featuredOffer.partner_name}</span>
+                <span style="background:#FF6B00;color:white;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;">${featuredOffer.discount || ''}</span>
+              </div>
+            </div>
+            <div style="background:#FF6B00;color:white;padding:8px;text-align:center;font-size:11px;font-weight:700;">
+              Profiter de l'offre →
+            </div>
+          </div>
+        `;
+      }
+  } else if (activeBanner && activeBanner.image_url) {
+      // Mode bannière image classique
+      bannerHtml = `
+        <div style="margin:8px 10px;border-radius:10px;overflow:hidden;cursor:pointer;" onclick="simShowOffer('${activeBanner.offer_id || ''}')">
+          <img src="${activeBanner.image_url}" style="width:100%;display:block;" onerror="this.style.display='none'">
+          ${activeBanner.message ? `<div style="background:#003189;color:white;padding:6px 10px;font-size:10px;font-weight:600;">${activeBanner.message}</div>` : ''}
+        </div>
+      `;
+  } else {
+      // Placeholder — aucune bannière active
+      bannerHtml = `
+        <div style="margin:8px 10px;border-radius:10px;background:#FFFFFF;height:120px;display:flex;justify-content:center;align-items:center;border:1px solid #E5E7EB;">
+          <span style="color:#E5E7EB;font-size:30px;">🖼️</span>
+        </div>
+      `;
+  }
+    content.innerHTML = offersHtml + bannerHtml;
 }
 
 /**
