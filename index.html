@@ -3050,19 +3050,34 @@ async function saveEditBanner() {
     return;
   }
 
-  const ok = await supabaseUpdate('banners', id, {
-    name,
-    message: message || null,
-    image_url: imageUrl || null,
-    offer_id: offerId || null,
-    featured_offer_id: featuredOfferId || null,
-    featured_title: featuredTitle || null,
+  // Récupère l'ancienne bannière pour comparer les images
+const banners = await supabaseQuery('banners', { select: '*' });
+const oldBanner = banners.find(b => b.id === id);
+
+// Si l'image a changé, supprime l'ancienne du Storage
+if (oldBanner && oldBanner.image_url && imageUrl && oldBanner.image_url !== imageUrl) {
+  const oldFileName = oldBanner.image_url.split('/').pop();
+  await fetch(`${SUPABASE_URL}/storage/v1/object/offers-images/${oldFileName}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    }
   });
+  addLog('🖼️ Image bannière modifiée', `"${name}" — ancienne image supprimée, nouvelle image enregistrée`);}
+
+const ok = await supabaseUpdate('banners', id, {
+  name,
+  message: message || null,
+  image_url: imageUrl || null,
+  offer_id: offerId || null,
+  featured_offer_id: featuredOfferId || null,
+  featured_title: featuredTitle || null,
+});
 
   if (ok) {
     showAlert(`✅ Bannière "${name}" modifiée !`, 'success', 0);
-    addLog('✏️ Modification bannière', `"${name}"`);
-    closeEditBanner();
+    addLog('✏️ Modification bannière', `"${name}"${oldBanner?.image_url !== imageUrl ? ' + nouvelle image' : ''}`);    closeEditBanner();
     loadBanners();
   } else {
     showAlert('❌ Erreur lors de la modification', 'error', 0);
