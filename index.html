@@ -2465,7 +2465,10 @@ async function loadBanners() {
           ? `<button class="btn-edit" onclick="deactivateBanner('${b.id}', '${b.name}')">⏸️ Désactiver</button>`
           : `<button class="btn-primary" onclick="activateBanner('${b.id}', '${b.name}')">▶️ Activer</button>`
         }
-        <button class="btn-edit" onclick="openEditBanner('${b.id}')">✏️ Modifier</button>
+        ${b.featured_offer_id 
+        ? '' 
+        : `<button class="btn-edit" onclick="openEditBanner('${b.id}')">✏️ Modifier</button>`
+        }
         <button class="btn-danger" onclick="deleteBanner('${b.id}', '${b.name}', '${b.image_url}')">🗑️ Supprimer</button>
       </div>
     </div>`;
