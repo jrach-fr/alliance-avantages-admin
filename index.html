@@ -173,13 +173,13 @@
 
 <!-- APP -->
 <div id="app">
-  <header>
-    <img src="https://v-images.cdnsw.com/Root/ebtri/Logo_AA.jpg" alt="Alliance Avantages" onerror="this.style.display='none'">
-    <div class="header-right">
-      <span id="header-info">Chargement...</span>
-      <button onclick="logout()">Déconnexion</button>
-    </div>
-  </header>
+<div class="header-right">
+    <span id="header-info">Chargement...</span>
+    <button onclick="showSimulator()" style="background:#003189;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
+    📱 Simulateur
+    </button>
+  <button onclick="logout()">Déconnexion</button>
+</div>
 
   <nav>
     <button class="active" onclick="showSection('dashboard', this)">📊 Tableau de bord</button>
@@ -189,7 +189,6 @@
     <button onclick="showSection('trash', this)">🗑️ Poubelle</button>
     <button onclick="showSection('settings', this)">⚙️ Paramètres</button>
     <button onclick="showSection('logs', this)">📋 Journal</button>
-    <button onclick="showSection('simulator', this)">📱 Simulateur</button>
   </nav>
 
   <main>
@@ -2729,12 +2728,28 @@ async function clearLogs() {
   // ============================================================
 
   /**
+ * FONCTION : showSimulator
+ * DESCRIPTION : Affiche le simulateur depuis le bouton header
+ *               Sans changer l'onglet actif dans la navigation
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : affiche #section-simulator, charge les données
+ */
+function showSimulator() {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-simulator').classList.add('active');
+  document.getElementById('alert').style.display = 'none';
+  loadSimulator();
+}
+
+  /**
  * FONCTION : refreshSimulator
  * DESCRIPTION : Actualise toutes les données du simulateur depuis Supabase
  * PARAMÈTRES : aucun
  * RETOURNE : rien
  * MODIFIE : contenu de #sim-categories, #sim-content, #sim-info, #sim-banner-info
  */
+
 async function refreshSimulator() {
   await loadSimulator();
 }
