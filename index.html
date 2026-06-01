@@ -870,6 +870,51 @@
 
   </div>
 </div>
+
+<!-- MODAL APERÇU OFFRE MOBILE -->
+<!--
+  COMPOSANT  : Modal aperçu mobile
+  DESCRIPTION : Affiche une offre telle qu'elle apparaît sur l'application mobile
+                Réutilise le rendu du simulateur dans un cadre téléphone
+  DÉCLENCHÉ  : Au clic sur le titre d'une offre dans le tableau des offres
+-->
+<div class="modal-overlay" id="offer-preview-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>📱 Aperçu mobile</h3>
+      <button class="modal-close" onclick="closeOfferPreview()">×</button>
+    </div>
+    <div style="
+      width:320px;
+      margin:0 auto;
+      background:#111;
+      border-radius:32px;
+      padding:10px;
+      box-shadow:0 12px 40px rgba(0,0,0,0.3);
+    ">
+      <div style="
+        width:100%;
+        background:#F4F6FB;
+        border-radius:24px;
+        overflow:hidden;
+      ">
+        <!-- Barre statut -->
+        <div style="background:#FFFFFF;padding:6px 14px;display:flex;justify-content:space-between;">
+          <span style="font-size:10px;font-weight:600;">15:00</span>
+          <span style="font-size:10px;">📶 🔋</span>
+        </div>
+        <!-- Header logo -->
+        <div style="background:#FFFFFF;padding:6px 10px;border-bottom:1px solid #E5E7EB;">
+          <img src="logo.jpg" style="height:26px;object-fit:contain;" onerror="this.style.display='none'">
+        </div>
+        <!-- Contenu offre -->
+        <div id="offer-preview-content" style="padding:12px;background:#F4F6FB;min-height:200px;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
   
 <!-- MODAL EDIT -->
 
@@ -1251,7 +1296,7 @@ function togglePassword() {
     tbody.innerHTML = allOffers.map(o => {
       const cat = allCategories.find(c => c.id === o.category_id);
       return `<tr>
-        <td><strong>${o.title}</strong></td>
+        <td><strong style="cursor:pointer;color:#003189;" onclick="openOfferPreview('${o.id}')">${o.title}</strong></td>
         <td>${o.partner_name}</td>
         <td>${o.city || '-'}</td>
         <td><span class="badge badge-orange">${o.discount}</span></td>
@@ -1350,8 +1395,7 @@ function filterOffers() {
   tbody.innerHTML = filtered.map(o => {
     const cat = allCategories.find(c => c.id === o.category_id);
     return `<tr>
-      <td><strong>${o.title}</strong>${cat ? `<br><small style="color:#9CA3AF;">${cat.icon} ${cat.label}</small>` : ''}</td>
-      <td>${o.partner_name}</td>
+      <td><strong style="cursor:pointer;color:#003189;" onclick="openOfferPreview('${o.id}')">${o.title}</strong>${cat ? `<br><small style="color:#9CA3AF;">${cat.icon} ${cat.label}</small>` : ''}</td>      <td>${o.partner_name}</td>
       <td>${o.city || '-'}</td>
       <td><span class="badge badge-orange">${o.discount}</span></td>
       <td>
@@ -3197,7 +3241,51 @@ const ok = await supabaseUpdate('banners', id, {
     if (duration > 0) {
       setTimeout(() => el.style.display = 'none', duration);
     }
+
+   /**
+ * FONCTION : openOfferPreview
+ * DESCRIPTION : Ouvre la modal d'aperçu mobile pour une offre
+ *               Affiche l'offre telle qu'elle apparaît dans l'application
+ * PARAMÈTRES :
+ *   - id (string) : UUID de l'offre à afficher
+ * RETOURNE : rien
+ * MODIFIE : contenu de #offer-preview-content, affichage de #offer-preview-modal
+ */
+function openOfferPreview(id) {
+  const offer = allOffers.find(o => o.id === id);
+  if (!offer) return;
+
+  const content = document.getElementById('offer-preview-content');
+  content.innerHTML = `
+    ${offer.image_url ? `<img src="${offer.image_url}" style="width:100%;border-radius:10px;margin-bottom:10px;" onerror="this.style.display='none'">` : ''}
+    ${offer.flash ? '<span style="background:#FF6B00;color:white;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;">VENTE FLASH</span><br><br>' : ''}
+    <div style="background:#003189;color:white;padding:4px 10px;border-radius:6px;display:inline-block;font-size:13px;font-weight:700;margin-bottom:8px;">${offer.discount || ''}</div>
+    <div style="font-size:14px;font-weight:700;color:#001F5E;margin-bottom:4px;line-height:20px;">${offer.title}</div>
+    <div style="font-size:11px;color:#6B7280;margin-bottom:8px;">par ${offer.partner_name}</div>
+    <div style="font-size:11px;color:#374151;margin-bottom:4px;">📍 ${offer.city || 'En ligne'}</div>
+    ${offer.promo_code ? `<div style="background:#E8EDF8;color:#003189;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;display:inline-block;margin:6px 0;">🎟️ Code : ${offer.promo_code}</div>` : ''}
+    <div style="height:1px;background:#E5E7EB;margin:10px 0;"></div>
+    <div style="font-size:11px;color:#4B5563;line-height:16px;margin-bottom:12px;">${offer.description || ''}</div>
+    <div style="background:#FF6B00;color:white;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;">
+      Profiter de l'offre →
+    </div>
+  `;
+
+  document.getElementById('offer-preview-modal').classList.add('open');
+}
+
+/**
+ * FONCTION : closeOfferPreview
+ * DESCRIPTION : Ferme la modal d'aperçu mobile
+ * PARAMÈTRES : aucun
+ * RETOURNE : rien
+ * MODIFIE : classe CSS de #offer-preview-modal
+ */
+function closeOfferPreview() {
+  document.getElementById('offer-preview-modal').classList.remove('open');
   }
+    
+ }
 </script>
 </body>
 </html>
