@@ -1780,7 +1780,10 @@ function toggleCityInput(value) {
     const id = document.getElementById('edit-id').value;
     // Supprime l'ancienne image si elle a changé
     const oldOffer = allOffers.find(o => o.id === id);
-    const newImageUrl = document.getElementById('edit-image-url').value || null;
+const newImageUrl = document.getElementById('edit-image-url').value || null;
+console.log('Ancienne URL:', oldOffer?.image_url);
+console.log('Nouvelle URL:', newImageUrl);
+console.log('Sont différentes:', oldOffer?.image_url !== newImageUrl);
     if (oldOffer && oldOffer.image_url && newImageUrl && oldOffer.image_url !== newImageUrl) {
       const oldFileName = oldOffer.image_url.split('/').pop();
       await fetch(`${SUPABASE_URL}/storage/v1/object/offers-images/${oldFileName}`, {
