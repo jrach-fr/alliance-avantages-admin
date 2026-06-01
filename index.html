@@ -1006,9 +1006,15 @@
         <label>Code promo</label>
         <input type="text" id="edit-promo-code">
       </div>
-      <div class="form-group">
-        <label>Image URL</label>
-        <input type="url" id="edit-image-url">
+      <div class="form-group full">
+        <label>Image</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <input type="file" id="edit-image-file" accept="image/jpeg,image/png,image/jpg" onchange="uploadEditOfferImage(this)" style="padding:8px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;">
+          <input type="url" id="edit-image-url" placeholder="Ou collez une URL directement...">
+          <small style="color:#9CA3AF;">Laissez vide pour conserver l'image actuelle. Format : JPG, 800x450px.</small>
+          <div id="edit-offer-upload-status" style="font-size:12px;display:none;"></div>
+          <img id="edit-offer-image-thumb" src="" style="display:none;width:100%;max-height:120px;object-fit:cover;border-radius:8px;">
+        </div>
       </div>
       <div class="form-group">
         <label>Date d'expiration</label>
@@ -1733,7 +1739,18 @@ function toggleCityInput(value) {
     document.getElementById('edit-partner-name').value = o.partner_name || '';
     document.getElementById('edit-partner-url').value = o.partner_url || '';
     document.getElementById('edit-promo-code').value = o.promo_code || '';
-    document.getElementById('edit-image-url').value = o.image_url || '';
+    
+    // Réinitialise les champs upload et affiche l'image actuelle
+    document.getElementById('edit-offer-upload-status').style.display = 'none';
+    document.getElementById('edit-image-file').value = '';
+    const thumb = document.getElementById('edit-offer-image-thumb');
+    if (o.image_url) {
+      thumb.src = o.image_url;
+      thumb.style.display = 'block';
+    } else {
+      thumb.style.display = 'none';
+    }
+    
     document.getElementById('edit-expires-at').value = o.expires_at ? o.expires_at.slice(0,16) : '';
     document.getElementById('edit-flash').checked = o.flash || false;
     document.getElementById('edit-is-new').checked = o.is_new || false;
@@ -1761,6 +1778,20 @@ function toggleCityInput(value) {
  */
   async function saveEdit() {
     const id = document.getElementById('edit-id').value;
+    // Supprime l'ancienne image si elle a changé
+    const oldOffer = allOffers.find(o => o.id === id);
+    const newImageUrl = document.getElementById('edit-image-url').value || null;
+    if (oldOffer && oldOffer.image_url && newImageUrl && oldOffer.image_url !== newImageUrl) {
+      const oldFileName = oldOffer.image_url.split('/').pop();
+      await fetch(`${SUPABASE_URL}/storage/v1/object/offers-images/${oldFileName}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        }
+      });
+    }
+    
     const data = {
       title: document.getElementById('edit-title').value,
       description: document.getElementById('edit-description').value,
@@ -3285,6 +3316,60 @@ function openOfferPreview(id) {
 function closeOfferPreview() {
   document.getElementById('offer-preview-modal').classList.remove('open');
 }
+
+/**
+ * FONCTION : uploadEditOfferImage
+ * DESCRIPTION : Upload une nouvelle image pour une offre en cours de modification
+ *               Supprime l'ancienne image du Storage si elle existait
+ * PARAMÈTRES :
+ *   - input (HTMLInputElement) : l'élément file input
+ * RETOURNE : rien
+ * MODIFIE : #edit-image-url, #edit-offer-upload-status, #edit-offer-image-thumb
+ */
+async function uploadEditOfferImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const status = document.getElementById('edit-offer-upload-status');
+  const thumb = document.getElementById('edit-offer-image-thumb');
+  const urlInput = document.getElementById('edit-image-url');
+
+  status.style.display = 'block';
+  status.style.color = '#6B7280';
+  status.textContent = '⏳ Upload en cours...';
+
+  const fileName = 'offer-' + Date.now() + '-' + file.name.replace(/\s/g, '-');
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/offers-images/${fileName}`;
+
+  try {
+    const res = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': file.type,
+        'Cache-Control': '3600',
+      },
+      body: file
+    });
+
+    if (res.ok) {
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/offers-images/${fileName}`;
+      urlInput.value = publicUrl;
+      status.style.color = '#065F46';
+      status.textContent = '✅ Image uploadée avec succès !';
+      thumb.src = publicUrl;
+      thumb.style.display = 'block';
+    } else {
+      status.style.color = '#991B1B';
+      status.textContent = '❌ Erreur lors de l\'upload.';
+    }
+  } catch (e) {
+    status.style.color = '#991B1B';
+    status.textContent = '❌ Erreur réseau.';
+  }
+}
+  
 </script>
 </body>
 </html>
