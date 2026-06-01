@@ -1793,6 +1793,8 @@ console.log('Sont différentes:', oldOffer?.image_url !== newImageUrl);
           'Authorization': `Bearer ${SUPABASE_KEY}`,
         }
       });
+        console.log('Statut suppression:', delRes.status, delRes.ok);
+
     }
     
     const data = {
